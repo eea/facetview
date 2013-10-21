@@ -751,6 +751,10 @@ search box - the end user will not know they are happening.
                 for (var thing = 0; thing < dataobj.facets[item]["terms"].length; thing++) {
                     facetsobj[ dataobj.facets[item]["terms"][thing]["term"] ] = dataobj.facets[item]["terms"][thing]["count"];
                 }
+		var undefCount = dataobj.facets[item]["missing"];
+		if (undefCount > 0) {
+		    facetsobj["undefined"] = undefCount;
+		}
                 resultobj["facets"][item] = facetsobj;
             }
             return resultobj;
@@ -985,6 +989,7 @@ search box - the end user will not know they are happening.
         var elasticsearchquery = function() {
             var qs = {};
             var bool = false;
+	    var filter = false;
             var nested = false;
             var seenor = []; // track when an or group are found and processed
             $('.facetview_filterselected',obj).each(function() {
@@ -1010,22 +1015,33 @@ search box - the end user will not know they are happening.
                     if ( $(this).hasClass('facetview_logic_or') ) {
                         if ( !($(this).attr('rel') in seenor) ) {
                             seenor.push($(this).attr('rel'));
-                            var bobj = {'bool':{'should':[]}};
+                            filter = {'bool':{'should':[]}};
                             $('.facetview_filterselected[rel="' + $(this).attr('rel') + '"]').each(function() {
                                 if ( $(this).hasClass('facetview_logic_or') ) {
-                                    var ob = {'term':{}};
-                                    ob['term'][ $(this).attr('rel') ] = $(this).attr('href');
-                                    bobj.bool.should.push(ob);
+                                    var value = $(this).attr('href');
+				    if(value === 'undefined') {
+			 	    var ob = {'missing':{'field':[]}};
+				    ob.missing.field.push($(this).attr('rel'));
+				    } else {
+				    	var ob = {'term':{}};
+                                    	ob['term'][ $(this).attr('rel') ] = value;
+				    }
+                                    filter.bool.should.push(ob);
                                 };
                             });
-                            if ( bobj.bool.should.length == 1 ) {
-                                var spacer = {'match_all':{}};
-                                bobj.bool.should.push(spacer);
-                            }
+                            if ( filter.bool.should.length == 0 ) {
+                            	filter = false;
+			    }
                         }
                     } else {
-                        var bobj = {'term':{}};
-                        bobj['term'][ $(this).attr('rel') ] = $(this).attr('href');
+			var value = $(this).attr('href');
+			if (value === 'undefined') {
+			    !filter ? filter = {'missing':{'field':[]}} : "";
+			    filter.missing.field.push($(this).attr('rel'));
+			} else {
+                            var bobj = {'term':{}};
+                            bobj['term'][ $(this).attr('rel') ] = value;
+			}
                     }
                     
                     // check if this should be a nested query
@@ -1033,7 +1049,7 @@ search box - the end user will not know they are happening.
                     if ( options.nested.indexOf(parts[0]) != -1 ) {
                         !nested ? nested = {"nested":{"_scope":parts[0],"path":parts[0],"query":{"bool":{"must":[bobj]}}}} : nested.nested.query.bool.must.push(bobj);
                     } else {
-                        bool['must'].push(bobj);
+			!bobj ? "" : bool['must'].push(bobj);
                     }
                 }
             });
@@ -1055,7 +1071,7 @@ search box - the end user will not know they are happening.
                     bool['must'].push( {'query_string': qryval } );
                 };
                 nested ? bool['must'].push(nested) : "";
-                qs['query'] = {'bool': bool};
+		bool['must'].length > 0 ? qs['query'] = {'bool': bool} : qs['query'] = {'match_all': {}};
             } else {
                 if ( options.q != "" ) {
                     var qryval = { 'query': fuzzify(options.q) };
@@ -1066,6 +1082,9 @@ search box - the end user will not know they are happening.
                     qs['query'] = {'match_all': {}};
                 };
             };
+	    if (filter) {
+		qs['query'] = {'filtered':{'query':qs['query'],'filter':filter}};
+	    }
             // set any paging
             options.paging.from != 0 ? qs['from'] = options.paging.from : "";
             options.paging.size != 10 ? qs['size'] = options.paging.size : "";
