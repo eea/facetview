@@ -329,6 +329,11 @@ search term. If * or ~ or : are already in the freetext search term, it will be 
 to do a complex search term so no action will be taken. NOTE these changes are not replicated into the freetext
 search box - the end user will not know they are happening.
 
+add_undefined
+-------------
+Adds a new value to each set, 'undefined', coresponding to the facet response 'missing'.
+For each property, 'undefined' will cover all objects that do not have a value for it.
+
 */
 
 
@@ -751,11 +756,14 @@ search box - the end user will not know they are happening.
                 for (var thing = 0; thing < dataobj.facets[item]["terms"].length; thing++) {
                     facetsobj[ dataobj.facets[item]["terms"][thing]["term"] ] = dataobj.facets[item]["terms"][thing]["count"];
                 }
-		var undefCount = dataobj.facets[item]["missing"];
-		if (undefCount > 0) {
-		    facetsobj["undefined"] = undefCount;
-		}
+                if(options.add_undefined) {
+                    var undefCount = dataobj.facets[item]["missing"];
+                    if(undefCount > 0) {
+                        facetsobj["undefined"] = undefCount;
+                    }
+                }
                 resultobj["facets"][item] = facetsobj;
+
             }
             return resultobj;
         };
@@ -989,7 +997,7 @@ search box - the end user will not know they are happening.
         var elasticsearchquery = function() {
             var qs = {};
             var bool = false;
-	    var filter = false;
+            var filter = false;
             var nested = false;
             var seenor = []; // track when an or group are found and processed
             $('.facetview_filterselected',obj).each(function() {
@@ -1019,29 +1027,29 @@ search box - the end user will not know they are happening.
                             $('.facetview_filterselected[rel="' + $(this).attr('rel') + '"]').each(function() {
                                 if ( $(this).hasClass('facetview_logic_or') ) {
                                     var value = $(this).attr('href');
-				                            if(value === 'undefined') {
-			 	                                var ob = {'missing':{'field':[]}};
+                                    if(value === 'undefined') {
+                                        var ob = {'missing':{'field':[]}};
                                         ob.missing.field.push($(this).attr('rel'));
                                     } else {
-				    	                          var ob = {'term':{}};
+                                        var ob = {'term':{}};
                                         ob['term'][ $(this).attr('rel') ] = value;
-                                    }
-                                    filter.bool.should.push(ob);
+                                   }
+                                   filter.bool.should.push(ob);
                                 };
                             });
                             if ( filter.bool.should.length == 0 ) {
-                            	  filter = false;
-			                      }
+                                filter = false;
+                            }
                         }
                     } else {
                         var value = $(this).attr('href');
-			                  if (value === 'undefined') {
-			                      !filter ? filter = {'missing':{'field':[]}} : "";
+                        if(value === 'undefined') {
+                            !filter ? filter = {'missing':{'field':[]}} : "";
                             filter.missing.field.push($(this).attr('rel'));
                         } else {
                             var bobj = {'term':{}};
                             bobj['term'][ $(this).attr('rel') ] = value;
-			                  }
+                        }
                     }
 
                     // check if this should be a nested query
@@ -1049,7 +1057,7 @@ search box - the end user will not know they are happening.
                     if ( options.nested.indexOf(parts[0]) != -1 ) {
                         !nested ? nested = {"nested":{"_scope":parts[0],"path":parts[0],"query":{"bool":{"must":[bobj]}}}} : nested.nested.query.bool.must.push(bobj);
                     } else {
-			!bobj ? "" : bool['must'].push(bobj);
+                        !bobj ? "" : bool['must'].push(bobj);
                     }
                 }
             });
@@ -1071,7 +1079,7 @@ search box - the end user will not know they are happening.
                     bool['must'].push( {'query_string': qryval } );
                 };
                 nested ? bool['must'].push(nested) : "";
-		bool['must'].length > 0 ? qs['query'] = {'bool': bool} : qs['query'] = {'match_all': {}};
+                bool['must'].length > 0 ? qs['query'] = {'bool' : bool} : qs['query'] = {'match_all' : {}};
             } else {
                 if ( options.q != "" ) {
                     var qryval = { 'query': fuzzify(options.q) };
@@ -1082,9 +1090,9 @@ search box - the end user will not know they are happening.
                     qs['query'] = {'match_all': {}};
                 };
             };
-	    if (filter) {
-          qs['query'] = {'filtered':{'query':qs['query'],'filter':filter}};
-      }
+            if (filter) {
+                qs['query'] = {'filtered':{'query':qs['query'],'filter':filter}};
+            }
             // set any paging
             options.paging.from != 0 ? qs['from'] = options.paging.from : "";
             options.paging.size != 10 ? qs['size'] = options.paging.size : "";
@@ -1110,7 +1118,6 @@ search box - the end user will not know they are happening.
             if (options.filter) {
                 qs['filter'] = options.filter;
             }
-            //alert(JSON.stringify(qs,"","    "));
             qy = JSON.stringify(qs);
             if ( options.include_facets_in_querystring ) {
                 options.querystring = qy;
@@ -1199,7 +1206,7 @@ search box - the end user will not know they are happening.
         // parse any source params out for an initial search
         var parsesource = function() {
             var qrystr = options.source.query;
-            if ( 'filtered' in qrystr ) {
+            if( 'filtered' in qrystr ) {
                 var qrys = [];
                 var flts = [];
                 var or = false;
@@ -1229,28 +1236,25 @@ search box - the end user will not know they are happening.
                                     clickfilterchoice(false,t,qrys[qry][key][t]);
                                 };
                             };
-                        } else if ( key == 'query_string' ) {
-                            typeof(qrys[qry][key]['query']) == 'string' ? options.q = qrys[qry][key]['query'] : "";
                         } else if ( key == 'bool' ) {
-                        // TODO: handle sub-bools
+                        //TODO: handle sub-bools
                         };
                     };
                 };
                 for ( var flt = 0; flt < flts.length; flt++) {
-                   //TODO change here
-                   if(or) {
-                      for ( var key in flts[flt] ) {
-                          if ( key == 'term' ) {
-                              for ( var t in flts[flt][key] ) {
-                                  if ( !(t in options.predefined_filters) ) {
-                                      //$('.facetview_or[href="' + t + '"]').attr('rel', 'OR');
-                                      clickfilterchoice(false,t,flts[flt][key][t]);
-                                  }
-                              }
-                          }
-                      }
-                   } else
-                      clickfilterchoice(false, flts[flt], 'undefined');
+                    if(or) {
+                        for ( var key in flts[flt] ) {
+                            if ( key == 'term' ) {
+                                for ( var t in flts[flt][key] ) {
+                                    if ( !(t in options.predefined_filters) ) {
+                                        clickfilterchoice(false,t,flts[flt][key][t]);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        clickfilterchoice(false, flts[flt], 'undefined');
+                    }
                 };
             } else {
                 if ( 'bool' in qrystr ) {
