@@ -334,6 +334,16 @@ add_undefined
 Adds a new value to each set, 'undefined', coresponding to the facet response 'missing'.
 For each property, 'undefined' will cover all objects that do not have a value for it.
 
+static_filter
+-------------
+A static filter with predefined values that can be included in the search.
+
+oneorless
+---------
+An option for static filters saying that the user can either select a value, or
+not select anything. Therefore, when a new value is selected, the previous one,
+if it exists, will be disabled.
+
 */
 
 
@@ -440,7 +450,8 @@ For each property, 'undefined' will cover all objects that do not have a value f
             "pushstate": true,
             "linkify": true,
             "default_operator": "OR",
-            "default_freetext_fuzzify": false
+            "default_freetext_fuzzify": false,
+            "static_filters": []
         };
 
 
@@ -610,10 +621,13 @@ For each property, 'undefined' will cover all objects that do not have a value f
 
         // pass a list of filters to be displayed
         var buildfilters = function() {
-            if ( options.facets.length > 0 ) {
+            if (options.facets.length > 0 ||
+                options.static_filters.length > 0) {
+
                 var filters = options.facets;
                 var thefilters = '';
                 for ( var idx = 0; idx < filters.length; idx++ ) {
+                    var current_filter = filters[idx];
                     var _filterTmpl = '<table id="facetview_{{FILTER_NAME}}" class="facetview_filters table table-bordered table-condensed table-striped" style="display:none;"> \
                         <tr><td><a class="facetview_filtershow" title="filter by {{FILTER_DISPLAY}}" rel="{{FILTER_NAME}}" \
                         style="color:#333; font-weight:bold;" href=""><i class="icon-plus"></i> {{FILTER_DISPLAY}} \
@@ -630,24 +644,24 @@ For each property, 'undefined' will cover all objects that do not have a value f
                     _filterTmpl +='</div> \
                         </td></tr> \
                         </table>';
-                    _filterTmpl = _filterTmpl.replace(/{{FILTER_NAME}}/g, filters[idx]['field'].replace(/\./gi,'_').replace(/\:/gi,'_')).replace(/{{FILTER_EXACT}}/g, filters[idx]['field']);
+                    _filterTmpl = _filterTmpl.replace(/{{FILTER_NAME}}/g, current_filter['field'].replace(/\./gi,'_').replace(/\:/gi,'_')).replace(/{{FILTER_EXACT}}/g, current_filter['field']);
                     thefilters += _filterTmpl;
-                    if ('size' in filters[idx] ) {
-                        thefilters = thefilters.replace(/{{FILTER_HOWMANY}}/gi, filters[idx]['size']);
+                    if ('size' in current_filter ) {
+                        thefilters = thefilters.replace(/{{FILTER_HOWMANY}}/gi, current_filter['size']);
                     } else {
                         thefilters = thefilters.replace(/{{FILTER_HOWMANY}}/gi, 10);
                     };
-                    if ( 'order' in filters[idx] ) {
-                        if ( filters[idx]['order'] == 'term' ) {
+                    if ( 'order' in current_filter ) {
+                        if ( current_filter['order'] == 'term' ) {
                             thefilters = thefilters.replace(/{{FILTER_SORTTERM}}/g, 'facetview_term');
                             thefilters = thefilters.replace(/{{FILTER_SORTCONTENT}}/g, 'a-z <i class="icon-arrow-down"></i>');
-                        } else if ( filters[idx]['order'] == 'reverse_term' ) {
+                        } else if ( current_filter['order'] == 'reverse_term' ) {
                             thefilters = thefilters.replace(/{{FILTER_SORTTERM}}/g, 'facetview_rterm');
                             thefilters = thefilters.replace(/{{FILTER_SORTCONTENT}}/g, 'a-z <i class="icon-arrow-up"></i>');
-                        } else if ( filters[idx]['order'] == 'count' ) {
+                        } else if ( current_filter['order'] == 'count' ) {
                             thefilters = thefilters.replace(/{{FILTER_SORTTERM}}/g, 'facetview_count');
                             thefilters = thefilters.replace(/{{FILTER_SORTCONTENT}}/g, 'count <i class="icon-arrow-down"></i>');
-                        } else if ( filters[idx]['order'] == 'reverse_count' ) {
+                        } else if ( current_filter['order'] == 'reverse_count' ) {
                             thefilters = thefilters.replace(/{{FILTER_SORTTERM}}/g, 'facetview_rcount');
                             thefilters = thefilters.replace(/{{FILTER_SORTCONTENT}}/g, 'count <i class="icon-arrow-up"></i>');
                         };
@@ -656,13 +670,55 @@ For each property, 'undefined' will cover all objects that do not have a value f
                         thefilters = thefilters.replace(/{{FILTER_SORTCONTENT}}/g, 'count <i class="icon-arrow-down"></i>');
                     };
                     thefilters = thefilters.replace(/{{FACET_IDX}}/gi,idx);
-                    if ('display' in filters[idx]) {
-                        thefilters = thefilters.replace(/{{FILTER_DISPLAY}}/g, filters[idx]['display']);
+                    if ('display' in current_filter) {
+                        thefilters = thefilters.replace(/{{FILTER_DISPLAY}}/g, current_filter['display']);
                     } else {
-                        thefilters = thefilters.replace(/{{FILTER_DISPLAY}}/g, filters[idx]['field']);
+                        thefilters = thefilters.replace(/{{FILTER_DISPLAY}}/g, current_filter['field']);
                     };
                 };
                 $('#facetview_filters', obj).html("").append(thefilters);
+
+                //Add static filters
+                filters = options.static_filters;
+                staticfilters = '';
+                for ( var idx = 0; idx < filters.length; idx++ ) {
+                    var current_filter = filters[idx];
+                     var _filterTmpl = '<table id="facetview_{{FILTER_NAME}}" class="facetview_s_filters table table-bordered table-condensed table-striped"> \
+                        <tr><td><a class="facetview_filtershow" title="filter by {{FILTER_DISPLAY}}" rel="{{FILTER_NAME}}" \
+                        style="color:#333; font-weight:bold;" href=""><i class="icon-plus"></i> {{FILTER_DISPLAY}} \
+                        </a> \
+                        <div class="facetview_listoptions" style="display:none;margin-top:5px;"> \
+                            <a class="facetview_listtype" title="list type" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">{{LIST_TYPE}}</a> \
+                        </div> \
+                        <div class="btn-group facetview_filteroptions" style="display:none; margin-top:5px;"> \
+                            <a class="btn btn-small facetview_morefacetvals" title="filter list size" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">{{FILTER_HOWMANY}}</a> \
+                            ';
+                    if ( options.enable_rangeselect ) {
+                        _filterTmpl += '<a class="btn btn-small facetview_facetrange" title="make a range selection on this filter" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}" style="color:#aaa;">range</a>';
+                    }
+                    _filterTmpl +='</div> \
+                        </td></tr> \
+                        </table>';
+                    _filterTmpl = _filterTmpl.replace(/{{FILTER_NAME}}/g, current_filter['field'].replace(/\./gi,'_').replace(/\:/gi,'_')).replace(/{{FILTER_EXACT}}/g, current_filter['field']);
+                    staticfilters += _filterTmpl;
+                    staticfilters = staticfilters.replace(/{{FILTER_HOWMANY}}/gi, current_filter.length);
+
+                    staticfilters = staticfilters.replace(/{{FACET_IDX}}/gi,idx);
+                    if ('display' in current_filter) {
+                        staticfilters =
+                        staticfilters.replace(/{{FILTER_DISPLAY}}/g, current_filter['display']);
+                    } else {
+                        staticfilters =
+                        staticfilters.replace(/{{FILTER_DISPLAY}}/g, current_filter['field']);
+                    };
+                    if ( 'type' in current_filter ) {
+                        staticfilters = staticfilters.replace(/{{LIST_TYPE}}/g, current_filter['type']['value']);
+                    } else {
+                        staticfilters = staticfilters.replace(/{{LIST_TYPE}}/g, 'multiple');
+                    };
+
+                };
+                $('#facetview_s_filters', obj).html("").append(staticfilters);
                 $('.facetview_morefacetvals', obj).bind('click',morefacetvals);
                 $('.facetview_facetrange', obj).bind('click',facetrange);
                 $('.facetview_sort', obj).bind('click',sortfilters);
@@ -686,6 +742,12 @@ For each property, 'undefined' will cover all objects that do not have a value f
             // Do nothing if element already exists.
             if( $('a.facetview_filterselected[href="'+href+'"][rel="'+rel+'"]').length ){
                 return null;
+            }
+
+            //If the list is of type oneorless, deselect previous choice
+            if ( $('a.facetview_listtype[href="'+rel+'"]').length &&
+                $('a.facetview_listtype[href="'+rel+'"]').text() == "oneorless"){
+                $('a.facetview_filterselected[rel="'+rel+'"]').remove();
             }
 
             var newobj = '<a class="facetview_filterselected facetview_clear btn btn-info';
@@ -877,8 +939,9 @@ For each property, 'undefined' will cover all objects that do not have a value f
 
             // for each filter setup, find the results for it and append them to the relevant filter
             for ( var each = 0; each < options.facets.length; each++ ) {
-                var facet = options.facets[each]['field'];
-                var facetclean = options.facets[each]['field'].replace(/\./gi,'_').replace(/\:/gi,'_');
+                var current_filter = options.facets[each];
+                var facet = current_filter['field'];
+                var facetclean = current_filter['field'].replace(/\./gi,'_').replace(/\:/gi,'_');
                 var facet_filter = $('[id="facetview_'+facetclean+'"]', obj);
                 facet_filter.children().find('.facetview_filtervalue').remove();
                 var records = data["facets"][ facet ];
@@ -892,6 +955,26 @@ For each property, 'undefined' will cover all objects that do not have a value f
                     facet_filter.children().find('.facetview_filtervalue').show();
                 }
             }
+            // for each static filter: apped the values
+
+            for (var each = 0; each < options.static_filters.length; each++ ) {
+                var current_filter = options.static_filters[each];
+                var facet= current_filter['field'];
+                var facetclean = current_filter['field'].replace(/\./gi,'_').replace(/\:/gi,'_');
+                var facet_filter = $('[id="facetview_'+facetclean+'"]', obj);
+                facet_filter.children().find('.facetview_filtervalue').remove();
+                var records = current_filter['values'];
+                for ( var item = 0; item < records.length; item ++ ) {
+                    var append = '<tr class="facetview_filtervalue" style="display:none;"><td><a class="facetview_filterchoice' +
+                        '" rel="' + facet + '" href="' + records[item]['value'] + '">' +
+                        records[item]['display'] + '</a></td></tr>';
+                    facet_filter.append(append);
+                }
+                if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
+                    facet_filter.children().find('.facetview_filtervalue').show();
+                }
+            }
+
             $('.facetview_filterchoice', obj).bind('click',clickfilterchoice);
             $('.facetview_filters', obj).each(function() {
                 $(this).find('.facetview_filtershow').css({'color':'#333','font-weight':'bold'}).children('i').show();
@@ -1339,8 +1422,9 @@ For each property, 'undefined' will cover all objects that do not have a value f
 
         // the facet view object to be appended to the page
         var thefacetview = '<div id="facetview"><div class="row-fluid">';
-        if ( options.facets.length > 0 ) {
-            thefacetview += '<div class="span3"><div id="facetview_filters" style="padding-top:45px;"></div></div>';
+        if ( options.facets.length > 0 || options.static_filters.length > 0) {
+            thefacetview += '<div class="span3"><div id="facetview_filters" style="padding-top:45px;"></div>';
+            thefacetview += '<div id="facetview_s_filters" style="padding-top:5px;"></div></div>';
             thefacetview += '<div class="span9" id="facetview_rightcol">';
         } else {
             thefacetview += '<div class="span12" id="facetview_rightcol">';
