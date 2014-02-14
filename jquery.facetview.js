@@ -57,11 +57,6 @@ jQuery.extend({
                 } else {
                     var newval = unescape(hash[1].replace(/%22/gi,'"'));
                 }
-                var size = newval['size'];
-                var from = newval['from'];
-                newval['paging'] = {};
-                newval['paging']['size'] = size;
-                newval['paging']['from'] = from;
                 params[hash[0]] = newval;
             }
         }
@@ -467,9 +462,14 @@ if it exists, will be disabled.
         // (see bottom of this file)
         var provided_options = $.extend(defaults, options);
         var url_options = $.getUrlVars();
-        $.fn.facetview.options = $.extend(provided_options, url_options['source']);
+        $.fn.facetview.options = $.extend(provided_options, url_options);
         var options = $.fn.facetview.options;
-
+        if( url_options.source) {
+            var from = url_options['source']['from'];
+            options.paging.from = !from ? options.paging.from : from;
+            var size = url_options['source']['size'];
+            options.paging.size = !size ? options.paging.size : size;
+        }
         // ===============================================
         // functions to do with filters
         // ===============================================
