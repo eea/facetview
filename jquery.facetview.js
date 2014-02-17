@@ -1294,6 +1294,8 @@ if it exists, will be disabled.
         // parse any source params out for an initial search
         var parsesource = function() {
             var qrystr = options.source.query;
+            var pre_filters = options.predefined_filters;
+
             if( 'filtered' in qrystr ) {
                 var qrys = [];
                 var flts = [];
@@ -1317,12 +1319,21 @@ if it exists, will be disabled.
                     }
                 }
                 for ( var qry = 0; qry < qrys.length; qry++ ) {
-                    for ( var key in qrys[qry] ) {
+                    var curr_qry = qrys[qry];
+                    var in_pre = false;
+                    for ( var p = 0; p < pre_filters.length; p++ ) {
+                        if ( JSON.stringify(curr_qry) === JSON.stringify(pre_filters[p])) {
+                            in_pre = true;
+                            break;
+                        }
+                    }
+                    if ( in_pre )
+                        continue;
+
+                    for ( var key in curr_qry ) {
                         if ( key == 'term' ) {
-                            for ( var t in qrys[qry][key] ) {
-                                if ( !(t in options.predefined_filters) ) {
-                                    clickfilterchoice(false,t,qrys[qry][key][t]);
-                                };
+                            for ( var t in curr_qry[key] ) {
+                                clickfilterchoice(false,t,curr_qry[key][t]);
                             };
                         } else if ( key == 'bool' ) {
                         //TODO: handle sub-bools
@@ -1330,18 +1341,28 @@ if it exists, will be disabled.
                     };
                 };
                 for ( var flt = 0; flt < flts.length; flt++) {
+                    var curr_flt = flts[flt];
+                    var in_pre = false;
+                    for ( var p = 0; p < pre_filters.length; p++ ) {
+                        if ( JSON.stringify(curr_flt) === JSON.stringify(pre_filters[p])) {
+                            in_pre = true;
+                            break;
+                        }
+                    }
+                    if ( in_pre )
+                        continue;
+
+
                     if(or) {
-                        for ( var key in flts[flt] ) {
+                        for ( var key in curr_flt ) {
                             if ( key == 'term' ) {
-                                for ( var t in flts[flt][key] ) {
-                                    if ( !(t in options.predefined_filters) ) {
-                                        clickfilterchoice(false,t,flts[flt][key][t]);
-                                    }
+                                for ( var t in curr_flt[key] ) {
+                                    clickfilterchoice(false,t,curr_flt[key][t]);
                                 }
                             }
                         }
                     } else {
-                        clickfilterchoice(false, flts[flt], 'undefined');
+                        clickfilterchoice(false, curr_flt, 'undefined');
                     }
                 };
             } else {
@@ -1354,15 +1375,24 @@ if it exists, will be disabled.
                         qrys = qrystr.bool.should;
                     };
                     for ( var qry = 0; qry < qrys.length; qry++ ) {
-                        for ( var key in qrys[qry] ) {
+                        var curr_qry = qrys[qry];
+                        var in_pre = false;
+                        for ( var p = 0; p < pre_filters.length; p++ ) {
+                            if ( JSON.stringify(curr_qry) === JSON.stringify(pre_filters[p])) {
+                                in_pre = true;
+                                break;
+                            }
+                        }
+                        if ( in_pre )
+                            continue;
+
+                        for ( var key in curr_qry ) {
                             if ( key == 'term' ) {
-                                for ( var t in qrys[qry][key] ) {
-                                    if ( !(t in options.predefined_filters) ) {
-                                        clickfilterchoice(false,t,qrys[qry][key][t]);
-                                    };
+                                for ( var t in curr_qry[key] ) {
+                                    clickfilterchoice(false,t,curr_qry[key][t]);
                                 };
                             } else if ( key == 'query_string' ) {
-                                typeof(qrys[qry][key]['query']) == 'string' ? options.q = qrys[qry][key]['query'] : "";
+                                typeof(curr_qry[key]['query']) == 'string' ? options.q = curr_qry[key]['query'] : "";
                             } else if ( key == 'bool' ) {
                                 // TODO: handle sub-bools
                             };
