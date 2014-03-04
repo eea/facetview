@@ -1475,7 +1475,7 @@ if it exists, will be disabled.
             thefacetview += '</div>';
             thefacetview += '<select class="facetview_orderby" style="border-radius:5px; \
                 -moz-border-radius:5px; -webkit-border-radius:5px; width:100px; background:#eee; margin:0 5px 21px 0;"> \
-                <option value="">order by</option>';
+                <option value="">Relevance</option>';
             for ( var each = 0; each < options.search_sortby.length; each++ ) {
                 var obj = options.search_sortby[each];
                 thefacetview += '<option value="' + obj['field'] + '">' + obj['display'] + '</option>';
