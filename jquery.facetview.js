@@ -790,6 +790,7 @@ if it exists, will be disabled.
             } else {
                 $(this).remove();
             }
+            options.paging.from = 0;
             dosearch();
         };
 
