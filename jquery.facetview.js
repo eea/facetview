@@ -469,6 +469,8 @@ if it exists, will be disabled.
             options.paging.from = !from ? options.paging.from : from;
             var size = url_options['source']['size'];
             options.paging.size = !size ? options.paging.size : size;
+            var sort = url_options['source']['sort'];
+            options.sort = !sort ? options.sort : sort;
         }
         // ===============================================
         // functions to do with filters
