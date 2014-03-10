@@ -1246,6 +1246,23 @@ if it exists, will be disabled.
             });
         };
 
+        // adds extra functionality before performing a search
+        var do_special_search = function() {
+            options.paging.from = 0;
+            if(options.selected_sort) {
+                options.sort = options.selected_sort;
+            }
+            else{
+                var order_options = $('.facetview_orderby')[0].children;
+                for ( var order_option in order_options) {
+                    if (order_options[order_option].value === "")
+                        order_options[order_option].selected = "select";
+                }
+                options.sort = [];
+            }
+            dosearch();
+        };
+
         // show search help
         var learnmore = function(event) {
             event.preventDefault();
@@ -1287,8 +1304,10 @@ if it exists, will be disabled.
                 var sorton = sortchoice;
                 sorting[sorton] = {'order': $('.facetview_order', obj).attr('href')};
                 options.sort = [sorting];
+                options.selected_sort = [sorting]
             } else {
                 options.sort = [];
+                options.selected_sort = [];
             }
             options.paging.from = 0;
             dosearch();
@@ -1482,7 +1501,7 @@ if it exists, will be disabled.
             for ( var each = 0; each < options.search_sortby.length; each++ ) {
                 var selected = "";
                 var obj = options.search_sortby[each];
-                if (options.sort[0][obj['field']] != undefined) {
+                if (!options.selected_sort && options.sort[0][obj['field']] != undefined) {
                     selected = 'selected=""';
                 }
                 thefacetview += '<option value="' + obj['field'] + '" ' + selected + '">Order by: ' + obj['display'] + '</option>';
@@ -1557,7 +1576,7 @@ if it exists, will be disabled.
                 if ( options.searchbox_class.length == 0 ) {
                     options.q != "" ? $('.facetview_freetext', obj).val(options.q) : "";
                     buildfilters();
-                    $('.facetview_freetext', obj).bindWithDelay('keyup',dosearch,options.freetext_submit_delay);
+                    $('.facetview_freetext', obj).bindWithDelay('keyup',do_special_search,options.freetext_submit_delay);
                 } else {
                     options.q != "" ? $(options.searchbox_class).last().val(options.q) : "";
                     buildfilters();
