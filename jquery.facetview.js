@@ -1488,7 +1488,7 @@ if it exists, will be disabled.
         }
         thefacetview += '<div class="facetview_search_options_container">';
         thefacetview += '<div class="btn-group" style="display:inline-block; margin-right:5px;"> \
-            <a class="btn btn-small" title="clear all search settings and start again" href=""><i class="icon-remove"></i></a> \
+            <a class="btn btn-small" title="clear all search settings and start again" href="{{REFRESH}}"><i class="icon-remove"></i></a> \
             <a class="btn btn-small facetview_learnmore" title="click to view search help information" href="#"><b>?</b></a> \
             <a class="btn btn-small facetview_howmany" title="change result set size" href="#">{{HOW_MANY}}</a>';
         if ( options.search_sortby.length > 0 ) {
@@ -1550,6 +1550,7 @@ if it exists, will be disabled.
             var whenready = function() {
                 // append the facetview object to this object
                 thefacetview = thefacetview.replace(/{{HOW_MANY}}/gi,options.paging.size);
+		thefacetview = thefacetview.replace(/{{REFRESH}}/gi, hash);
                 obj.append(thefacetview);
                 !options.embedded_search ? $('.facetview_search_options_container', obj).hide() : "";
 
