@@ -60,7 +60,6 @@ jQuery.extend({
                 params[hash[0]] = newval;
             }
         }
-
         return params;
     },
     getUrlVar: function(name){
@@ -464,6 +463,8 @@ if it exists, will be disabled.
         var url_options = $.getUrlVars();
         $.fn.facetview.options = $.extend(provided_options, url_options);
         var options = $.fn.facetview.options;
+        window.embed = url_options.embed;
+
         if( url_options.source) {
             var from = url_options['source']['from'];
             options.paging.from = !from ? options.paging.from : from;
