@@ -497,9 +497,7 @@ if it exists, will be disabled.
                 } else {
                     ml_button.trigger('click');
                     ml_button.trigger('click');
-                }
-
-                
+                }                
             }
         };
 
@@ -516,6 +514,7 @@ if it exists, will be disabled.
                 $('.facetview_filterselected[rel="' + $(this).attr('href') + '"]', obj).removeClass('facetview_logic_or');
             }
             dosearch();
+            
         }
 
         // function to perform for sorting of filters
@@ -972,7 +971,13 @@ if it exists, will be disabled.
                 }
                 if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
                     facet_filter.children().find('.facetview_filtervalue').show();
+                    var button = $('.facetview_moreless')[each];
+                    if(button.text == 'More'){
+                        $(button).trigger('click');
+                        $(button).trigger('click');
+                    }
                 }
+
             }
             // for each static filter: apped the values
 
