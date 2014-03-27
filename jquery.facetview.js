@@ -491,7 +491,12 @@ if it exists, will be disabled.
                 $(this).addClass('facetview_open');
                 $('[id="facetview_' + $(this).attr('rel') +'"]', obj ).children().find('.facetview_filtervalue').show();
                 $(this).siblings('.facetview_filteroptions').show();
-                $('.facetview_moreless').trigger('click');
+                var ml_button = $(this).parent().children('.facetview_filteroptions').children('.facetview_moreless');
+                if (ml_button.text() == 'Less') {
+                    ml_button.trigger('click');    
+                }
+
+                
             }
         };
 
