@@ -494,6 +494,9 @@ if it exists, will be disabled.
                 var ml_button = $(this).parent().children('.facetview_filteroptions').children('.facetview_moreless');
                 if (ml_button.text() == 'Less') {
                     ml_button.trigger('click');    
+                } else {
+                    ml_button.trigger('click');
+                    ml_button.trigger('click');
                 }
 
                 
@@ -650,7 +653,7 @@ if it exists, will be disabled.
                             <a class="btn btn-small facetview_morefacetvals" title="filter list size" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">{{FILTER_HOWMANY}}</a> \
                             <a class="btn btn-small facetview_sort {{FILTER_SORTTERM}}" title="filter value order" href="{{FILTER_EXACT}}">{{FILTER_SORTCONTENT}}</a> \
                             <a class="btn btn-small facetview_or" title="select another option from this filter" rel="AND" href="{{FILTER_EXACT}}" style="color:#aaa;">OR</a> \
-                            <a class="btn btn-small facetview_moreless" title="show more or less" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">Less</a> \
+                            <a class="btn btn-small facetview_moreless" title="show more or less" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">More</a> \
                             ';
                     if ( options.enable_rangeselect ) {
                         _filterTmpl += '<a class="btn btn-small facetview_facetrange" title="make a range selection on this filter" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}" style="color:#aaa;">range</a>';
