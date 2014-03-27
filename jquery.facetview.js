@@ -644,6 +644,7 @@ if it exists, will be disabled.
                             <a class="btn btn-small facetview_morefacetvals" title="filter list size" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">{{FILTER_HOWMANY}}</a> \
                             <a class="btn btn-small facetview_sort {{FILTER_SORTTERM}}" title="filter value order" href="{{FILTER_EXACT}}">{{FILTER_SORTCONTENT}}</a> \
                             <a class="btn btn-small facetview_or" title="select another option from this filter" rel="AND" href="{{FILTER_EXACT}}" style="color:#aaa;">OR</a> \
+                            <a class="btn btn-small facetview_moreless" title="show more or less" rel="More/less" href="{{FILTER_EXACT}}">More</a> \
                             ';
                     if ( options.enable_rangeselect ) {
                         _filterTmpl += '<a class="btn btn-small facetview_facetrange" title="make a range selection on this filter" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}" style="color:#aaa;">range</a>';
@@ -733,6 +734,7 @@ if it exists, will be disabled.
                 $('.facetview_filtershow', obj).bind('click',showfiltervals);
                 $('.facetview_learnmore', obj).unbind('click',learnmore);
                 $('.facetview_learnmore', obj).bind('click',learnmore);
+                $('.facetview_moreless', obj).bind('click',showmoreless);
                 options.description ? $('#facetview_filters', obj).append('<div>' + options.description + '</div>') : "";
             };
         };
@@ -1263,6 +1265,27 @@ if it exists, will be disabled.
             dosearch();
         };
 
+        //toogle between more and less display results
+        var showmoreless = function(event) {
+            event.preventDefault();
+            var value = $(this).text();
+
+            if (value === 'More') {
+                var c = $('.facetview_filterchoice');
+                $(this).closest('tr').siblings('.facetview_filtervalue').children().show();
+            } else {
+                var filter_values =  $(this).closest('tr').siblings('.facetview_filtervalue');
+                //TODO replace 10 with real value from filter settings
+                var i = 10;
+                for (; i< filter_values.length; i++) {
+                    $(filter_values[i]).children().hide();
+                }
+            }
+
+            value = (value === 'More')? 'Less' : "More"; 
+            $('.facetview_moreless',obj).text(value);
+            var currfilter = $(this).href();
+        }
         // show search help
         var learnmore = function(event) {
             event.preventDefault();
