@@ -1295,8 +1295,9 @@ if it exists, will be disabled.
                 }
             }
 
-            value = (value === 'More')? 'Less' : "More"; 
-            $('.facetview_moreless',obj).text(value);
+            value = (value === 'More')? 'Less' : "More";
+            console.log($(this));
+            $(this).text(value); 
         };
         // show search help
         var learnmore = function(event) {
