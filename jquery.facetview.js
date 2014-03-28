@@ -1296,7 +1296,6 @@ if it exists, will be disabled.
             }
 
             value = (value === 'More')? 'Less' : "More";
-            console.log($(this));
             $(this).text(value); 
         };
         // show search help
