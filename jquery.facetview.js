@@ -345,6 +345,13 @@ An option for static filters saying that the user can either select a value, or
 not select anything. Therefore, when a new value is selected, the previous one,
 if it exists, will be disabled.
 
+hierarchy
+---------
+When this exists and it is not false, it defines a controled vocabulary for the
+facet values. The values are classified into categories, sub-categories... with
+an unlimited number of possible children. All the categories are possible facets
+but they are not obtained from the data.
+
 */
 
 
@@ -452,7 +459,8 @@ if it exists, will be disabled.
             "linkify": true,
             "default_operator": "OR",
             "default_freetext_fuzzify": false,
-            "static_filters": []
+            "static_filters": [],
+            "hierarchy": false
         };
 
 
@@ -484,20 +492,25 @@ if it exists, will be disabled.
                 $(this).children('i').addClass('icon-plus');
                 $(this).removeClass('facetview_open');
                 $('[id="facetview_' + $(this).attr('rel') +'"]', obj ).children().find('.facetview_filtervalue').hide();
+                $(this).parent().parent().siblings('.facetview_filtervalue_hierarchic').hide();
+                $(this).parent().parent().siblings('.facetview_filterdiv_hierarchic').hide();
                 $(this).siblings('.facetview_filteroptions').hide();
             } else {
                 $(this).children('i').removeClass('icon-plus');
                 $(this).children('i').addClass('icon-minus');
                 $(this).addClass('facetview_open');
                 $('[id="facetview_' + $(this).attr('rel') +'"]', obj ).children().find('.facetview_filtervalue').show();
+                $(this).parent().parent().siblings('.facetview_filtervalue_hierarchic').show();
+                $(this).parent().parent().siblings('.facetview_filterdiv_hierarchic').show();
                 $(this).siblings('.facetview_filteroptions').show();
+
                 var ml_button = $(this).parent().children('.facetview_filteroptions').children('.facetview_moreless');
                 if (ml_button.text() == 'Less') {
-                    ml_button.trigger('click');    
+                    ml_button.trigger('click');
                 } else {
                     ml_button.trigger('click');
                     ml_button.trigger('click');
-                }                
+                }
             }
         };
 
@@ -514,7 +527,7 @@ if it exists, will be disabled.
                 $('.facetview_filterselected[rel="' + $(this).attr('href') + '"]', obj).removeClass('facetview_logic_or');
             }
             dosearch();
-            
+
         }
 
         // function to perform for sorting of filters
@@ -573,12 +586,21 @@ if it exists, will be disabled.
         var dofacetrange = function(rel) {
             $('#facetview_rangeresults_' + rel, obj).remove();
             var range = $('#facetview_rangechoices_' + rel, obj).html();
-            var newobj = '<div style="display:none;" class="btn-group" id="facetview_rangeresults_' + rel + '"> \
-                <a class="facetview_filterselected facetview_facetrange facetview_clear \
-                btn btn-info" rel="' + rel +
-                '" alt="remove" title="remove"' +
-                ' href="' + $(this).attr("href") + '">' +
-                range + ' <i class="icon-white icon-remove"></i></a></div>';
+            var newobj = [
+                '<div style="display:none;" class="btn-group"',
+                'id="facetview_rangeresults_',
+                rel,
+                '"> ',
+                '<a class="facetview_filterselected facetview_facetrange ',
+                'facetview_clear btn btn-info" rel="',
+                rel,
+                '" alt="remove" title="remove" href="',
+                $(this).attr("href"),
+                '">',
+                range,
+                ' <i class="icon-white icon-remove"></i></a></div>'
+            ].join("");
+
             $('#facetview_selectedfilters', obj).append(newobj);
             $('.facetview_filterselected', obj).unbind('click',clearfilter);
             $('.facetview_filterselected', obj).bind('click',clearfilter);
@@ -598,18 +620,28 @@ if it exists, will be disabled.
             // should perhaps also remove any selections already made on that facet
             event.preventDefault();
             var rel = $(this).attr('rel');
-            var rangeselect = '<div id="facetview_rangeplaceholder_' + rel + '" class="facetview_rangecontainer clearfix"> \
-                <div class="clearfix"> \
-                <h3 id="facetview_rangechoices_' + rel + '" style="margin-left:10px; margin-right:10px; float:left; clear:none;" class="clearfix"> \
-                <span class="facetview_lowrangeval_' + rel + '">...</span> \
-                <small>to</small> \
-                <span class="facetview_highrangeval_' + rel + '">...</span></h3> \
-                <div style="float:right;" class="btn-group">';
-            rangeselect += '<a class="facetview_facetrange_remove btn" rel="' + rel + '" alt="remove" title="remove" \
-                 href="#"><i class="icon-remove"></i></a> \
-                </div></div> \
-                <div class="clearfix" style="margin:20px;" id="facetview_slider_' + rel + '"></div> \
-                </div>';
+            var rangeselect = [
+                '<div id="facetview_rangeplaceholder_',
+                rel,
+                '" class="facetview_rangecontainer clearfix"> ',
+                '<div class="clearfix"> <h3 id="facetview_rangechoices_',
+                rel,
+                '" style="margin-left:10px; margin-right:10px; float:left; ',
+                'clear:none;" class="clearfix"> <span class="facetview_lowrangeval_',
+                rel,
+                '">...</span> <small>to</small>',
+                '<span class="facetview_highrangeval_',
+                rel,
+                '">...</span></h3> <div style="float:right;" class="btn-group">',
+                '<a class="facetview_facetrange_remove btn" rel="',
+                rel,
+                '" alt="remove" title="remove" href="#"><i class="icon-remove">',
+                '</i></a></div></div> <div class="clearfix" style="margin:20px;"',
+                'id="facetview_slider_',
+                rel,
+                '"></div> </div>'
+            ].join("");
+
             $('#facetview_selectedfilters', obj).after(rangeselect);
             $('.facetview_facetrange_remove', obj).unbind('click',clearfacetrange);
             $('.facetview_facetrange_remove', obj).bind('click',clearfacetrange);
@@ -625,13 +657,116 @@ if it exists, will be disabled.
                 max: values.length-1,
                 values: [0,values.length-1],
                 slide: function( event, ui ) {
-                    $('#facetview_rangechoices_' + rel + ' .facetview_lowrangeval_' + rel, obj).html( values[ ui.values[0] ] );
-                    $('#facetview_rangechoices_' + rel + ' .facetview_highrangeval_' + rel, obj).html( values[ ui.values[1] ] );
+                    $(
+                        '#facetview_rangechoices_' +
+                        rel +
+                        ' .facetview_lowrangeval_' +
+                        rel,
+                        obj
+                    ).html( values[ ui.values[0] ] );
+                    $(
+                        '#facetview_rangechoices_' +
+                        rel +
+                        ' .facetview_highrangeval_' +
+                        rel,
+                        obj
+                    ).html( values[ ui.values[1] ] );
                     dofacetrange( rel );
                 }
             });
-            $('#facetview_rangechoices_' + rel + ' .facetview_lowrangeval_' + rel, obj).html( values[0] );
-            $('#facetview_rangechoices_' + rel + ' .facetview_highrangeval_' + rel, obj).html( values[ values.length-1] );
+            $(
+                '#facetview_rangechoices_' +
+                rel +
+                ' .facetview_lowrangeval_' +
+                rel, obj
+            ).html( values[0] );
+            $(
+                '#facetview_rangechoices_' +
+                rel +
+                ' .facetview_highrangeval_' +
+                rel, obj
+            ).html( values[ values.length-1] );
+        };
+
+        //build the entire hierarchy of values
+        var buildHierarchy = function(predicate) {
+            return buildStructure(predicate, 0, options.hierarchy[predicate]);
+        };
+
+        //given a predicate and a dictionary, creates the tree-like hierarchy
+        var buildStructure = function (predicate, level, dict) {
+            var result = "";
+            if (typeof dict === "string") {
+                result = [
+                        '<tr class="facetview_filtervalue_hierarchic',
+                        '" title="filter" ',
+                        'style="display:none"><td><a class="facetview_filterchoice" rel="',
+                        predicate,
+                        '" href="',
+                        dict,
+                        '">',
+                        dict,
+                        ' (0)</a></td></tr>'
+                    ].join("");
+                return result;
+            }
+
+            if (dict instanceof Array) {
+                for (var element in dict) {
+                    result = [
+                        result,
+                        buildStructure(predicate, level + 1, dict[element]),
+                    ].join("");
+                }
+            } else {
+                for (var element in dict) {
+                    var children = buildStructure(predicate, level + 1, dict[element]);
+                    result = [
+                        result,
+                        '<tr class ="facetview_filterdiv_hierarchic',
+                        '" style="display:none"><td><a class="facetview_filterparent" rel="',
+                        element,
+                        '" style="" href=""><i ',
+                        'class="icon-plus"></i> ',
+                        element,
+                        '</a> <div class="btn-group facetview_filteroptions" ',
+                        'style="display:none; margin-top:5px;">',
+                        '<a class="btn btn-small facetview_learnmore" title="',
+                        'click to view search help information" href="#"><b>?',
+                        '</b></a> <a class="btn btn-small ',
+                        'facetview_morefacetvals" title="filter list size" rel="',
+                        predicate,
+                        '" href="',
+                        element,
+                        '">More/Less</a> <a class="btn btn-small ',
+                        'facetview_sort {{FILTER_SORTTERM}}" title="filter value order" href="{{FILTER_EXACT}}">{{FILTER_SORTCONTENT}}</a> ',
+                        '<a class="btn btn-small facetview_or" title="select another option from this filter" rel="AND" href="{{FILTER_EXACT}}" style="color:#aaa;">OR</a> ',
+                        '<a class="btn btn-small facetview_moreless" title="show more or less" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">More</a> ',
+                        '</div><table class="results" style="display:none"> ',
+                        children,
+                        '</table></td></tr>'
+                    ].join("");
+                }
+            }
+            return result;
+        };
+
+        var showchildren = function(event) {
+            event.preventDefault();
+            if ( $(this).hasClass('facetview_open') ) {
+                $(this).children('i').removeClass('icon-minus');
+                $(this).children('i').addClass('icon-plus');
+                $(this).removeClass('facetview_open');
+                $(this).siblings('.facetview_filteroptions').hide();
+                $(this).siblings('.results').hide();
+            } else {
+                $(this).children('i').removeClass('icon-plus');
+                $(this).children('i').addClass('icon-minus');
+                $(this).addClass('facetview_open');
+                $(this).siblings('.results').show();
+                $(this).siblings('.results').children().children().show();
+                $(this).siblings('.facetview_filteroptions').show();
+            }
         };
 
         // pass a list of filters to be displayed
@@ -643,53 +778,97 @@ if it exists, will be disabled.
                 var thefilters = '';
                 for ( var idx = 0; idx < filters.length; idx++ ) {
                     var current_filter = filters[idx];
-                    var _filterTmpl = '<table id="facetview_{{FILTER_NAME}}" class="facetview_filters table table-bordered table-condensed table-striped" style="display:none;"> \
-                        <tr><td><a class="facetview_filtershow" title="filter by {{FILTER_DISPLAY}}" rel="{{FILTER_NAME}}" \
-                        style="color:#333; font-weight:bold;" href=""><i class="icon-plus"></i> {{FILTER_DISPLAY}} \
-                        </a> \
-                        <div class="btn-group facetview_filteroptions" style="display:none; margin-top:5px;"> \
-                            <a class="btn btn-small facetview_learnmore" title="click to view search help information" href="#"><b>?</b></a> \
-                            <a class="btn btn-small facetview_morefacetvals" title="filter list size" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">{{FILTER_HOWMANY}}</a> \
-                            <a class="btn btn-small facetview_sort {{FILTER_SORTTERM}}" title="filter value order" href="{{FILTER_EXACT}}">{{FILTER_SORTCONTENT}}</a> \
-                            <a class="btn btn-small facetview_or" title="select another option from this filter" rel="AND" href="{{FILTER_EXACT}}" style="color:#aaa;">OR</a> \
-                            <a class="btn btn-small facetview_moreless" title="show more or less" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">More</a> \
-                            ';
+                    //Add the facet's title and options
+                    var _filterTmpl = [
+                        '<table id="facetview_{{FILTER_NAME}}" ',
+                        'class="facetview_filters table table-bordered ',
+                        'table-condensed table-striped" style="display:none;"> ',
+                        '<tr><td><a class="facetview_filtershow" title="filter ',
+                        'by {{FILTER_DISPLAY}}" rel="{{FILTER_NAME}}"',
+                        'style="color:#333; font-weight:bold;" href=""><i ',
+                        'class="icon-plus"></i> {{FILTER_DISPLAY}} </a> ',
+                        '<div class="btn-group facetview_filteroptions" ',
+                        'style="display:none; margin-top:5px;">',
+                        '<a class="btn btn-small facetview_learnmore" title="click to view search help information" href="#"><b>?</b></a> ',
+                        '<a class="btn btn-small facetview_morefacetvals" title="filter list size" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">{{FILTER_HOWMANY}}</a> ',
+                        '<a class="btn btn-small facetview_sort {{FILTER_SORTTERM}}" title="filter value order" href="{{FILTER_EXACT}}">{{FILTER_SORTCONTENT}}</a> ',
+                        '<a class="btn btn-small facetview_or" title="select another option from this filter" rel="AND" href="{{FILTER_EXACT}}" style="color:#aaa;">OR</a> ',
+                        '<a class="btn btn-small facetview_moreless" title="show more or less" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">More</a> '
+                    ].join("");
                     if ( options.enable_rangeselect ) {
-                        _filterTmpl += '<a class="btn btn-small facetview_facetrange" title="make a range selection on this filter" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}" style="color:#aaa;">range</a>';
+                        _filterTmpl = [
+                            _filterTmpl,
+                            '<a class="btn btn-small facetview_facetrange" ',
+                            'title="make a range selection on this filter" ',
+                            'rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}" ',
+                            'style="color:#aaa;">range</a>'
+                        ].join("");
                     }
-                    _filterTmpl +='</div> \
-                        </td></tr> \
-                        </table>';
-                    _filterTmpl = _filterTmpl.replace(/{{FILTER_NAME}}/g, current_filter['field'].replace(/\./gi,'_').replace(/\:/gi,'_')).replace(/{{FILTER_EXACT}}/g, current_filter['field']);
+
+                    if(options.hierarchy[current_filter['field']]) {
+                        _filterTmpl = [
+                            _filterTmpl,
+                            buildHierarchy(current_filter['field'])
+                        ].join("");
+
+                    }
+                    _filterTmpl +='</div> </td></tr> </table>';
+
+                    _filterTmpl = _filterTmpl
+                        .replace(
+                            /{{FILTER_NAME}}/g,
+                            current_filter['field']
+                                .replace(/\./gi,'_')
+                                .replace(/\:/gi,'_'))
+                        .replace(/{{FILTER_EXACT}}/g, current_filter['field']);
                     thefilters += _filterTmpl;
                     if ('size' in current_filter ) {
-                        thefilters = thefilters.replace(/{{FILTER_HOWMANY}}/gi, current_filter['size']);
+                        thefilters = thefilters.replace(
+                            /{{FILTER_HOWMANY}}/gi, current_filter['size']);
                     } else {
-                        thefilters = thefilters.replace(/{{FILTER_HOWMANY}}/gi, 10);
+                        thefilters = thefilters.replace(
+                            /{{FILTER_HOWMANY}}/gi, 10);
                     };
                     if ( 'order' in current_filter ) {
                         if ( current_filter['order'] == 'term' ) {
-                            thefilters = thefilters.replace(/{{FILTER_SORTTERM}}/g, 'facetview_term');
-                            thefilters = thefilters.replace(/{{FILTER_SORTCONTENT}}/g, 'a-z <i class="icon-arrow-down"></i>');
+                            thefilters = thefilters.replace(
+                                /{{FILTER_SORTTERM}}/g, 'facetview_term');
+                            thefilters = thefilters.replace(
+                                /{{FILTER_SORTCONTENT}}/g,
+                                'a-z <i class="icon-arrow-down"></i>');
                         } else if ( current_filter['order'] == 'reverse_term' ) {
-                            thefilters = thefilters.replace(/{{FILTER_SORTTERM}}/g, 'facetview_rterm');
-                            thefilters = thefilters.replace(/{{FILTER_SORTCONTENT}}/g, 'a-z <i class="icon-arrow-up"></i>');
+                            thefilters = thefilters.replace(
+                                /{{FILTER_SORTTERM}}/g, 'facetview_rterm');
+                            thefilters = thefilters.replace(
+                                /{{FILTER_SORTCONTENT}}/g,
+                                'a-z <i class="icon-arrow-up"></i>');
                         } else if ( current_filter['order'] == 'count' ) {
-                            thefilters = thefilters.replace(/{{FILTER_SORTTERM}}/g, 'facetview_count');
-                            thefilters = thefilters.replace(/{{FILTER_SORTCONTENT}}/g, 'count <i class="icon-arrow-down"></i>');
+                            thefilters = thefilters.replace(
+                                /{{FILTER_SORTTERM}}/g, 'facetview_count');
+                            thefilters = thefilters.replace(
+                                /{{FILTER_SORTCONTENT}}/g,
+                                'count <i class="icon-arrow-down"></i>');
                         } else if ( current_filter['order'] == 'reverse_count' ) {
-                            thefilters = thefilters.replace(/{{FILTER_SORTTERM}}/g, 'facetview_rcount');
-                            thefilters = thefilters.replace(/{{FILTER_SORTCONTENT}}/g, 'count <i class="icon-arrow-up"></i>');
+                            thefilters = thefilters.replace(
+                                /{{FILTER_SORTTERM}}/g, 'facetview_rcount');
+                            thefilters = thefilters.replace(
+                                /{{FILTER_SORTCONTENT}}/g,
+                                'count <i class="icon-arrow-up"></i>');
                         };
                     } else {
-                        thefilters = thefilters.replace(/{{FILTER_SORTTERM}}/g, 'facetview_count');
-                        thefilters = thefilters.replace(/{{FILTER_SORTCONTENT}}/g, 'count <i class="icon-arrow-down"></i>');
+                        thefilters = thefilters.replace(
+                            /{{FILTER_SORTTERM}}/g, 'facetview_count');
+                        thefilters = thefilters.replace(
+                            /{{FILTER_SORTCONTENT}}/g,
+                            'count <i class="icon-arrow-down"></i>');
                     };
                     thefilters = thefilters.replace(/{{FACET_IDX}}/gi,idx);
                     if ('display' in current_filter) {
-                        thefilters = thefilters.replace(/{{FILTER_DISPLAY}}/g, current_filter['display']);
+                        thefilters = thefilters.replace(
+                            /{{FILTER_DISPLAY}}/g, current_filter['display']);
                     } else {
-                        thefilters = thefilters.replace(/{{FILTER_DISPLAY}}/g, current_filter['field']);
+                        thefilters = thefilters.replace(
+                            /{{FILTER_DISPLAY}}/g, current_filter['field']);
                     };
                 };
                 $('#facetview_filters', obj).html("").append(thefilters);
@@ -699,38 +878,63 @@ if it exists, will be disabled.
                 staticfilters = '';
                 for ( var idx = 0; idx < filters.length; idx++ ) {
                     var current_filter = filters[idx];
-                     var _filterTmpl = '<table id="facetview_{{FILTER_NAME}}" class="facetview_s_filters table table-bordered table-condensed table-striped"> \
-                        <tr><td><a class="facetview_filtershow" title="filter by {{FILTER_DISPLAY}}" rel="{{FILTER_NAME}}" \
-                        style="color:#333; font-weight:bold;" href=""><i class="icon-plus"></i> {{FILTER_DISPLAY}} \
-                        </a> \
-                        <div class="facetview_listoptions" style="display:none;margin-top:5px;"> \
-                            <a class="facetview_listtype" title="list type" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">{{LIST_TYPE}}</a> \
-                        </div> \
-                        <div class="btn-group facetview_filteroptions" style="display:none; margin-top:5px;"> \
-                            <a class="btn btn-small facetview_morefacetvals" title="filter list size" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">{{FILTER_HOWMANY}}</a> \
-                            ';
+                     var _filterTmpl = [
+                        '<table id="facetview_{{FILTER_NAME}}" ',
+                        'class="facetview_s_filters table table-bordered ',
+                        'table-condensed table-striped"> <tr><td>',
+                        '<a class="facetview_filtershow" title="filter by ',
+                        '{{FILTER_DISPLAY}}" rel="{{FILTER_NAME}}" ',
+                        'style="color:#333; font-weight:bold;" href="">',
+                        '<i class="icon-plus"></i> {{FILTER_DISPLAY}} </a> ',
+                        '<div class="facetview_listoptions" ',
+                        'style="display:none;margin-top:5px;"> ',
+                        '<a class="facetview_listtype" title="list type" ',
+                        'rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">',
+                        '{{LIST_TYPE}}</a> </div> ',
+                        '<div class="btn-group facetview_filteroptions" ',
+                        'style="display:none; margin-top:5px;"> ',
+                        '<a class="btn btn-small facetview_morefacetvals" ',
+                        'title="filter list size" rel="{{FACET_IDX}}" ',
+                        'href="{{FILTER_EXACT}}">{{FILTER_HOWMANY}}</a> '
+                    ].join("");
                     if ( options.enable_rangeselect ) {
-                        _filterTmpl += '<a class="btn btn-small facetview_facetrange" title="make a range selection on this filter" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}" style="color:#aaa;">range</a>';
+                        _filterTmpl = [
+                            _filterTmpl,
+                            '<a class="btn btn-small facetview_facetrange" ',
+                            'title="make a range selection on this filter" ',
+                            'rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}" ',
+                            'style="color:#aaa;">range</a>'
+                        ].join("");
                     }
-                    _filterTmpl +='</div> \
-                        </td></tr> \
-                        </table>';
-                    _filterTmpl = _filterTmpl.replace(/{{FILTER_NAME}}/g, current_filter['field'].replace(/\./gi,'_').replace(/\:/gi,'_')).replace(/{{FILTER_EXACT}}/g, current_filter['field']);
+                    _filterTmpl +='</div> </td></tr> </table>';
+
+                    _filterTmpl = _filterTmpl
+                        .replace(
+                            /{{FILTER_NAME}}/g,
+                            current_filter['field']
+                                .replace(/\./gi,'_')
+                                .replace(/\:/gi,'_'))
+                        .replace(/{{FILTER_EXACT}}/g, current_filter['field']);
                     staticfilters += _filterTmpl;
-                    staticfilters = staticfilters.replace(/{{FILTER_HOWMANY}}/gi, current_filter.length);
+                    staticfilters = staticfilters.replace(
+                        /{{FILTER_HOWMANY}}/gi, current_filter.length);
 
                     staticfilters = staticfilters.replace(/{{FACET_IDX}}/gi,idx);
                     if ('display' in current_filter) {
                         staticfilters =
-                        staticfilters.replace(/{{FILTER_DISPLAY}}/g, current_filter['display']);
+                        staticfilters.replace(
+                            /{{FILTER_DISPLAY}}/g, current_filter['display']);
                     } else {
                         staticfilters =
-                        staticfilters.replace(/{{FILTER_DISPLAY}}/g, current_filter['field']);
+                        staticfilters.replace(
+                            /{{FILTER_DISPLAY}}/g, current_filter['field']);
                     };
                     if ( 'type' in current_filter ) {
-                        staticfilters = staticfilters.replace(/{{LIST_TYPE}}/g, current_filter['type']['value']);
+                        staticfilters = staticfilters.replace(
+                            /{{LIST_TYPE}}/g, current_filter['type']['value']);
                     } else {
-                        staticfilters = staticfilters.replace(/{{LIST_TYPE}}/g, 'multiple');
+                        staticfilters = staticfilters.replace(
+                            /{{LIST_TYPE}}/g, 'multiple');
                     };
 
                 };
@@ -743,6 +947,7 @@ if it exists, will be disabled.
                 $('.facetview_learnmore', obj).unbind('click',learnmore);
                 $('.facetview_learnmore', obj).bind('click',learnmore);
                 $('.facetview_moreless', obj).bind('click',showmoreless);
+                $('.facetview_filterparent', obj).bind('click',showchildren);
                 options.description ? $('#facetview_filters', obj).append('<div>' + options.description + '</div>') : "";
             };
         };
@@ -905,7 +1110,13 @@ if it exists, will be disabled.
                 var regex = /(http:\/\/\S+?\.(jpg|png|gif|jpeg))/;
                 var img = regex.exec(recstr);
                 if (img) {
-                    result += '<img class="thumbnail" style="float:left; width:100px; margin:0 5px 10px 0; max-height:150px;" src="' + img[0] + '" />';
+                    result = [
+                        result,
+                        '<img class="thumbnail" style="float:left; width:100px;',
+                        ' margin:0 5px 10px 0; max-height:150px;" src="',
+                        img[0],
+                        '" />'
+                    ].join("");
                 }
             }
             // add the record based on display template if available
@@ -964,9 +1175,18 @@ if it exists, will be disabled.
                 facet_filter.children().find('.facetview_filtervalue').remove();
                 var records = data["facets"][ facet ];
                 for ( var item in records ) {
-                    var append = '<tr class="facetview_filtervalue" style="display:none;"><td><a class="facetview_filterchoice' +
-                        '" rel="' + facet + '" href="' + item + '">' + item +
-                        ' (' + records[item] + ')</a></td></tr>';
+                    var append = [
+                        '<tr class="facetview_filtervalue" style="display:none;">',
+                        '<td><a class="facetview_filterchoice" rel="',
+                        facet,
+                        '" href="',
+                        item,
+                        '">',
+                        item,
+                        ' (',
+                        records[item],
+                        ')</a></td></tr>'
+                    ].join("");
                     facet_filter.append(append);
                 }
                 if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
@@ -989,9 +1209,16 @@ if it exists, will be disabled.
                 facet_filter.children().find('.facetview_filtervalue').remove();
                 var records = current_filter['values'];
                 for ( var item = 0; item < records.length; item ++ ) {
-                    var append = '<tr class="facetview_filtervalue" style="display:none;"><td><a class="facetview_filterchoice' +
-                        '" rel="' + facet + '" href="' + records[item]['value'] + '">' +
-                        records[item]['display'] + '</a></td></tr>';
+                    var append = [
+                        '<tr class="facetview_filtervalue" style="display:none;">',
+                        '<td><a class="facetview_filterchoice" rel="',
+                        facet,
+                        '" href="',
+                        records[item]['value'],
+                        '">',
+                        records[item]['display'],
+                        '</a></td></tr>'
+                    ].join("");
                     facet_filter.append(append);
                 }
                 if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
@@ -1296,7 +1523,7 @@ if it exists, will be disabled.
             }
 
             value = (value === 'More')? 'Less' : "More";
-            $(this).text(value); 
+            $(this).text(value);
         };
         // show search help
         var learnmore = function(event) {
