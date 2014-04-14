@@ -731,10 +731,8 @@ but they are not obtained from the data.
                         element,
                         '</a> <div class="btn-group facetview_filteroptions" ',
                         'style="display:none; margin-top:5px;">',
-                        '<a class="btn btn-small facetview_learnmore" title="',
-                        'click to view search help information" href="#"><b>?',
-                        '</b></a> <a class="btn btn-small ',
-                        'facetview_morefacetvals" title="filter list size" rel="',
+                        '<a class="btn btn-small facetview_morefacetvals" ',
+                        'title="filter list size" rel="',
                         predicate,
                         '" href="',
                         element,
@@ -1187,7 +1185,22 @@ but they are not obtained from the data.
                         records[item],
                         ')</a></td></tr>'
                     ].join("");
-                    facet_filter.append(append);
+                    if(options.hierarchy) {
+                        //TODO: iulia : merge with similar one by changing the number
+                        var empty = $(
+                            '.facetview_filterchoice[rel="' +
+                            facet +
+                            '"][href="' +
+                            item +
+                            '"]');
+                        if (empty.length > 0) {
+                            empty.text(item + "(" + records[item] + ")");
+                        } else {
+                            facet_filter.append(append);
+                        }
+                    } else {
+                        facet_filter.append(append);
+                    }
                 }
                 if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
                     facet_filter.children().find('.facetview_filtervalue').show();
