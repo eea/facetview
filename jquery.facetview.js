@@ -1153,6 +1153,13 @@ but they are not obtained from the data.
             var data = parseresults(sdata);
             options.data = data;
 
+            var choices = $('.facetview_filterchoice');
+            for (var choice = 0; choice < choices.length; choice++) {
+                var current = $(choices[choice]);
+                current.text(current.attr('href'));
+                current.parent().hide();
+            }
+
             // for each filter setup, find the results for it and append them to the relevant filter
             for ( var each = 0; each < options.facets.length; each++ ) {
                 var current_filter = options.facets[each];
@@ -1175,7 +1182,6 @@ but they are not obtained from the data.
                         ')</a></td></tr>'
                     ].join("");
                     if(options.hierarchy) {
-                        //TODO: iulia : merge with similar one by changing the number
                         var empty = $(
                             '.facetview_filterchoice[rel="' +
                             facet +
@@ -1184,6 +1190,7 @@ but they are not obtained from the data.
                             '"]');
                         if (empty.length > 0) {
                             empty.text(item + "(" + records[item] + ")");
+                            empty.parent().show();
                         } else {
                             facet_filter.append(append);
                         }
