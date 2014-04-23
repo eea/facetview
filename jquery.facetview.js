@@ -726,9 +726,12 @@ but they are not obtained from the data.
                         '<tr class ="facetview_filterdiv_hierarchic',
                         '" style="display:none"><td><a class="facetview_filterparent" rel="',
                         element,
-                        '" style="" href=""><i ',
+                        '" style="" href="',
+                        predicate,
+                        '"><i ',
                         'class="icon-plus"></i> ',
                         element,
+                        ' (0)',
                         '</a> <table class="results" style="display:none"> ',
                         children,
                         '</table></td></tr>'
@@ -1138,6 +1141,23 @@ but they are not obtained from the data.
             return result;
         };
 
+        //returns the number of results of the element's children
+        var getValCount = function(element) {
+            var result = 0;
+            var nonrecursiveChildren = element.find('.facetview_filterchoice');
+            for (var idx = 0; idx < nonrecursiveChildren.length; idx ++) {
+                var val = $(nonrecursiveChildren[idx]).text();
+                var start = val.indexOf('(');
+                var stop = val.indexOf(')');
+                val = parseInt(val.substring(start + 1, stop)) || 0;
+                result += val;
+
+            }
+
+            return result;
+
+        };
+
         // view a full record when selected
         var viewrecord = function(event) {
             event.preventDefault();
@@ -1198,6 +1218,28 @@ but they are not obtained from the data.
                         facet_filter.append(append);
                     }
                 }
+
+                // set count value for hierarchic values
+                if(options.hierarchy) {
+                    var parents = $('.facetview_filterparent');
+                    for (var idx = 0; idx< parents.length; idx++) {
+                        var text = $(parents[idx]).text();
+                        var start = text.indexOf('(');
+                        if (start < 0) {
+                            text += '(';
+                            start = text.length;
+                        }
+
+                        text = text.substring(0,start + 1);
+                        text = [
+                            text,
+                            getValCount($(parents[idx]).siblings()),
+                            ')'
+                        ].join('');
+                        $(parents).get(idx).lastChild.nodeValue = text;
+                    }
+                }
+
                 if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
                     facet_filter.children().find('.facetview_filtervalue').show();
                     var button = $('.facetview_moreless')[each];
@@ -1207,7 +1249,22 @@ but they are not obtained from the data.
                     }
                 }
 
+                //hide hierarchic parents with no results
+                if (options.hierarchy) {
+                    var parents = $('.facetview_filterparent');
+                    for (var idx = 0; idx< parents.length; idx++) {
+                        var text = $(parents[idx]).text();
+                        var start = text.indexOf('(');
+                        var stop = text.indexOf(')');
+                        text = parseInt(text.substring(start + 1, stop)) || 0;
+                        if (text == 0) {
+                            $(parents[idx]).parent().hide();
+                        }
+                    }
+
+                }
             }
+
             // for each static filter: apped the values
 
             for (var each = 0; each < options.static_filters.length; each++ ) {
