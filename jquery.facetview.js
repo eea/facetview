@@ -1259,6 +1259,8 @@ but they are not obtained from the data.
                         text = parseInt(text.substring(start + 1, stop)) || 0;
                         if (text == 0) {
                             $(parents[idx]).parent().hide();
+                        } else {
+                            $(parents[idx]).parent().show();
                         }
                     }
 
