@@ -352,6 +352,11 @@ facet values. The values are classified into categories, sub-categories... with
 an unlimited number of possible children. All the categories are possible facets
 but they are not obtained from the data.
 
+permanent_filters
+-----------------
+When this is set to true, the main filters (the defined facet values) will
+remain visible even if there is only one possible value.
+
 */
 
 
@@ -460,7 +465,8 @@ but they are not obtained from the data.
             "default_operator": "OR",
             "default_freetext_fuzzify": false,
             "static_filters": [],
-            "hierarchy": false
+            "hierarchy": false,
+            "permanent_filters": false
         };
 
 
@@ -1209,7 +1215,7 @@ but they are not obtained from the data.
                             item +
                             '"]');
                         if (empty.length > 0) {
-                            empty.text(item + "(" + records[item] + ")");
+                            empty.text(item + " (" + records[item] + ")");
                             empty.parent().show();
                         } else {
                             facet_filter.append(append);
@@ -1297,7 +1303,9 @@ but they are not obtained from the data.
             $('.facetview_filterchoice', obj).bind('click',clickfilterchoice);
             $('.facetview_filters', obj).each(function() {
                 $(this).find('.facetview_filtershow').css({'color':'#333','font-weight':'bold'}).children('i').show();
-                if ( $(this).children().find('.facetview_filtervalue').length > 1 ) {
+
+                var len = $(this).children().find('.facetview_filtervalue').length;
+                if ( len > 1 || (len ==1 && options.permanent_filters) ) {
                     $(this).show();
                 } else {
                     //$(this).hide();
