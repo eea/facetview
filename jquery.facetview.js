@@ -785,11 +785,20 @@ remain visible even if there is only one possible value.
                         'class="icon-plus"></i> {{FILTER_DISPLAY}} </a> ',
                         '<div class="btn-group facetview_filteroptions" ',
                         'style="display:none; margin-top:5px;">',
-                        '<a class="btn btn-small facetview_learnmore" title="click to view search help information" href="#"><b>?</b></a> ',
-                        '<a class="btn btn-small facetview_morefacetvals" title="filter list size" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">{{FILTER_HOWMANY}}</a> ',
-                        '<a class="btn btn-small facetview_sort {{FILTER_SORTTERM}}" title="filter value order" href="{{FILTER_EXACT}}">{{FILTER_SORTCONTENT}}</a> ',
-                        '<a class="btn btn-small facetview_or" title="select another option from this filter" rel="AND" href="{{FILTER_EXACT}}" style="color:#aaa;">OR</a> ',
-                        '<a class="btn btn-small facetview_moreless" title="show more or less" rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">More</a> '
+                        '<a class="btn btn-small facetview_learnmore" ',
+                        'title="click to view search help information" ',
+                        'href="#"><b>?</b></a> <a class="btn btn-small ',
+                        'facetview_morefacetvals" title="filter list size" ',
+                        'rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">',
+                        '{{FILTER_HOWMANY}}</a> <a class="btn btn-small ',
+                        'facetview_sort {{FILTER_SORTTERM}}" title="filter ',
+                        'value order" href="{{FILTER_EXACT}}">',
+                        '{{FILTER_SORTCONTENT}}</a> <a class="btn btn-small ',
+                        'facetview_or" title="select another option from this',
+                        ' filter" rel="AND" href="{{FILTER_EXACT}}" ',
+                        'style="color:#aaa;">OR</a> <a class="btn btn-small ',
+                        'facetview_moreless" title="show more or less" ',
+                        'rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">More</a> '
                     ].join("");
                     if ( options.enable_rangeselect ) {
                         _filterTmpl = [
@@ -1321,19 +1330,30 @@ remain visible even if there is only one possible value.
                 options.paging.size = parseInt(options.paging.size);
             }
             if ( options.pager_slider ) {
-                var metaTmpl = '<div style="font-size:20px;font-weight:bold;margin:5px 0 10px 0;padding:5px 0 5px 0;border:1px solid #eee;border-radius:5px;-moz-border-radius:5px;-webkit-border-radius:5px;"> \
-                    <a alt="previous" title="previous" class="facetview_decrement" style="color:#333;float:left;padding:0 40px 20px 20px;" href="{{from}}">&lt;</a> \
-                    <span style="margin:30%;">{{from}} &ndash; {{to}} of {{total}}</span> \
-                    <a alt="next" title="next" class="facetview_increment" style="color:#333;float:right;padding:0 20px 20px 40px;" href="{{to}}">&gt;</a> \
-                </div>';
+                var metaTmpl = [
+                    '<div style="font-size:20px;font-weight:bold;margin:5px 0',
+                    ' 10px 0;padding:5px 0 5px 0;border:1px solid #eee;',
+                    'border-radius:5px;-moz-border-radius:5px;',
+                    '-webkit-border-radius:5px;">',
+                    '<a alt="previous" title="previous" ',
+                    'class="facetview_decrement" style="color:#333;float:left;',
+                    'padding:0 40px 20px 20px;" href="{{from}}">&lt;</a> ',
+                    '<span style="margin:30%;">{{from}} &ndash; {{to}} of ',
+                    '{{total}}</span> ',
+                    '<a alt="next" title="next" class="facetview_increment" ',
+                    'style="color:#333;float:right;padding:0 20px 20px 40px;"',
+                    ' href="{{to}}">&gt;</a></div>'
+                ].join('');
             } else {
-                var metaTmpl = '<div class="pagination"> \
-                    <ul> \
-                        <li class="prev"><a class="facetview_decrement" href="{{from}}">&laquo; back</a></li> \
-                        <li class="active"><a>{{from}} &ndash; {{to}} of {{total}}</a></li> \
-                        <li class="next"><a class="facetview_increment" href="{{to}}">next &raquo;</a></li> \
-                    </ul> \
-                </div>';
+                var metaTmpl = [
+                    '<div class="pagination"> <ul> ',
+                    '<li class="prev"><a class="facetview_decrement" ',
+                    'href="{{from}}">&laquo; back</a></li> ',
+                    '<li class="active"><a>{{from}} &ndash; {{to}} of ',
+                    '{{total}}</a></li> ',
+                    '<li class="next"><a class="facetview_increment" ',
+                    'href="{{to}}">next &raquo;</a></li> </ul> </div>'
+                ].join('');
             };
             $('.facetview_metadata', obj).first().html("Not found...");
             if (data.found) {
@@ -1778,100 +1798,185 @@ remain visible even if there is only one possible value.
         };
 
         // a help box for embed in the facet view object below
-        var thehelp = '<div id="facetview_learnmore" class="well" style="margin-top:10px; display:none;">'
+        var thehelp = [
+            '<div id="facetview_learnmore" ',
+            'class="well" style="margin-top:10px; ',
+            'display:none;">'
+        ].join('');
         options.sharesave_link ? thehelp += '<p><b>Share</b> or <b>save</b> the current search by clicking the share/save arrow button on the right.</p>' : "";
-        thehelp += '<p><b>Remove all</b> search values and settings by clicking the <b>X</b> icon at the left of the search box above.</p> \
-            <p><b>Partial matches with wildcard</b> can be performed by using the asterisk <b>*</b> wildcard. For example, <b>einste*</b>, <b>*nstei*</b>.</p> \
-            <p><b>Fuzzy matches</b> can be performed using tilde <b>~</b>. For example, <b>einsten~</b> may help find <b>einstein</b>.</p> \
-            <p><b>Exact matches</b> can be performed with <b>"</b> double quotes. For example <b>"einstein"</b> or <b>"albert einstein"</b>.</p> \
-            <p>Match all search terms by concatenating them with <b>AND</b>. For example <b>albert AND einstein</b>.</p> \
-            <p>Match any term by concatenating them with <b>OR</b>. For example <b>albert OR einstein</b>.</p> \
-            <p><b>Combinations</b> will work too, like <b>albert OR einste~</b>, or <b>"albert" "einstein"</b>.</p> \
-            <p><b>Result set size</b> can be altered by clicking on the result size number preceding the search box above.</p>';
+        thehelp =[
+            thehelp,
+            '<p><b>Remove all</b> search values and settings by clicking the ',
+            '<b>X</b> icon at the left of the search box above.</p> ',
+            '<p><b>Partial matches with wildcard</b> can be performed by using',
+            ' the asterisk <b>*</b> wildcard. For example, <b>einste*</b>, ',
+            '<b>*nstei*</b>.</p> <p><b>Fuzzy matches</b> can be performed ',
+            'using tilde <b>~</b>. For example, <b>einsten~</b> may help find',
+            ' <b>einstein</b>.</p> <p><b>Exact matches</b> can be performed ',
+            'with <b>"</b> double quotes. For example <b>"einstein"</b> or ',
+            '<b>"albert einstein"</b>.</p> <p>Match all search terms by ',
+            'concatenating them with <b>AND</b>. For example <b>albert AND ',
+            'einstein</b>.</p> <p>Match any term by concatenating them with ',
+            '<b>OR</b>. For example <b>albert OR einstein</b>.</p> <p><b>',
+            'Combinations</b> will work too, like <b>albert OR einste~</b>, or',
+            ' <b>"albert" "einstein"</b>.</p> <p><b>Result set size</b> can ',
+            'be altered by clicking on the result size number preceding the ',
+            'search box above.</p>'
+        ].join('');
         if ( options.searchbox_fieldselect.length > 0 ) {
-            thehelp += '<p>By default, terms are searched for across entire record entries. \
-                This can be restricted to particular fields by selecting the field of interest from the <b>search field</b> dropdown</p>';
+            thehelp += [
+                '<p>By default, terms are searched for across entire record ',
+                'entries. This can be restricted to particular fields by ',
+                'selecting the field of interest from the <b>search field',
+                '</b> dropdown</p>'
+            ].join('');
         };
         if ( options.search_sortby.length > 0 ) {
-            thehelp += '<p>Choose a field to <b>sort the search results</b> by clicking the double arrow above.</p>';
+            thehelp = [
+                thehelp,
+                '<p>Choose a field to <b>sort the search results</b> ',
+                'by clicking the double arrow above.</p>'
+            ].join('');
         };
         if ( options.facets.length > 0 ) {
-            thehelp += '<hr></hr>';
-            thehelp += '<p>Use the <b>filters</b> on the left to directly select values of interest. \
-                Click the filter name to open the list of available terms and show further filter options.</p> \
-                <p><b>Filter list size</b> can be altered by clicking on the filter size number.</p> \
-                <p><b>Filter list order </b> can be adjusted by clicking the order options - \
-                from a-z ascending or descending, or by count ascending or descending.</p> \
-                <p>Filters search for unique values by default; to do an <b>OR</b> search - e.g. to look for more than one value \
-                for a particular filter - click the OR button for the relevant filter then choose your values.</p> \
-                <p>To further assist discovery of particular filter values, use in combination \
-                with the main search bar - search terms entered there will automatically adjust the available filter values.</p>';
+            thehelp = [
+                thehelp,
+                '<hr></hr>',
+                '<p>Use the <b>filters</b> on the left to directly select ',
+                'values of interest. Click the filter name to open the list ',
+                'of available terms and show further filter options.</p> ',
+                '<p><b>Filter list size</b> can be altered by clicking on the ',
+                'filter size number.</p> <p><b>Filter list order </b> can be ',
+                'adjusted by clicking the order options - from a-z ascending ',
+                'or descending, or by count ascending or descending.</p> ',
+                '<p>Filters search for unique values by default; to do an ',
+                '<b>OR</b> search - e.g. to look for more than one value ',
+                'for a particular filter - click the OR button for the ',
+                'relevant filter then choose your values.</p> <p>To further ',
+                'assist discovery of particular filter values, use in ',
+                'combination with the main search bar - search terms entered ',
+                'there will automatically adjust the available filter values.',
+                '</p>'
+            ].join('');
             if ( options.enable_rangeselect ) {
-                thehelp += '<p><b>Apply a filter range</b> rather than just selecting a single value by clicking on the <b>range</b> button. \
-                    This enables restriction of result sets to within a range of values - for example from year 1990 to 2012.</p> \
-                    <p>Filter ranges are only available across filter values already in the filter list; \
-                    so if a wider filter range is required, first increase the filter size then select the filter range.</p>';
+                thehelp = [
+                    thehelp,
+                    '<p><b>Apply a filter range</b> rather than just selecting',
+                    ' a single value by clicking on the <b>range</b> button. ',
+                    'This enables restriction of result sets to within a range',
+                    ' of values - for example from year 1990 to 2012.</p> ',
+                    '<p>Filter ranges are only available across filter values',
+                    ' already in the filter list; so if a wider filter range ',
+                    'is required, first increase the filter size then select ',
+                    'the filter range.</p>'
+                ].join('');
             }
         };
-        thehelp += '<p><a class="facetview_learnmore label" href="#">close the help</a></p></div>';
+        thehelp = [
+            thehelp,
+            '<p><a class="facetview_learnmore label" href="#">close the help',
+            '</a></p></div>'
+        ].join('');
 
         // the facet view object to be appended to the page
         var thefacetview = '<div id="facetview"><div class="row-fluid">';
         if ( options.facets.length > 0 || options.static_filters.length > 0) {
-            thefacetview += '<div class="span3"><div id="facetview_filters" style="padding-top:45px;"></div>';
-            thefacetview += '<div id="facetview_s_filters" style="padding-top:5px;"></div></div>';
-            thefacetview += '<div class="span9" id="facetview_rightcol">';
+            thefacetview = [
+                thefacetview,
+                '<div class="span3"><div id="facetview_filters" ',
+                'style="padding-top:45px;"></div>',
+                '<div id="facetview_s_filters" style="padding-top:5px;">',
+                '</div></div><div class="span9" id="facetview_rightcol">'
+            ].join('');
         } else {
             thefacetview += '<div class="span12" id="facetview_rightcol">';
         }
-        thefacetview += '<div class="facetview_search_options_container">';
-        thefacetview += '<div class="btn-group" style="display:inline-block; margin-right:5px;"> \
-            <a class="btn btn-small" title="clear all search settings and start again" href="{{REFRESH}}"><i class="icon-remove"></i></a> \
-            <a class="btn btn-small facetview_learnmore" title="click to view search help information" href="#"><b>?</b></a> \
-            <a class="btn btn-small facetview_howmany" title="change result set size" href="#">{{HOW_MANY}}</a>';
+        thefacetview = [
+            thefacetview,
+            '<div class="facetview_search_options_container">',
+            '<div class="btn-group" style="display:inline-block; ',
+            'margin-right:5px;"> <a class="btn btn-small" title="clear all ',
+            'search settings and start again" href="{{REFRESH}}">',
+            '<i class="icon-remove"></i></a> <a class="btn btn-small ',
+            'facetview_learnmore" title="click to view search help information"',
+            ' href="#"><b>?</b></a> <a class="btn btn-small facetview_howmany"',
+            ' title="change result set size" href="#">{{HOW_MANY}}</a>'
+        ].join('');
         if ( options.search_sortby.length > 0 ) {
-            thefacetview += '<a class="btn btn-small facetview_order" title="current order descending. Click to change to ascending" \
-                href="desc"><i class="icon-arrow-down"></i></a>';
-            thefacetview += '</div>';
-            thefacetview += '<select class="facetview_orderby" style="border-radius:5px; \
-                -moz-border-radius:5px; -webkit-border-radius:5px; width:150px; background:#eee; margin:0 5px 21px 0;"> \
-                <option value="">Order by: Relevance</option>';
+            thefacetview = [
+                thefacetview,
+                '<a class="btn btn-small facetview_order" title="current order',
+                ' descending. Click to change to ascending" href="desc">',
+                '<i class="icon-arrow-down"></i></a></div>',
+                '<select class="facetview_orderby" style="border-radius:5px; ',
+                '-moz-border-radius:5px; -webkit-border-radius:5px; ',
+                'width:150px; background:#eee; margin:0 5px 21px 0;"> ',
+                '<option value="">Order by: Relevance</option>'
+            ].join('');
             for ( var each = 0; each < options.search_sortby.length; each++ ) {
                 var selected = "";
                 var obj = options.search_sortby[each];
-                if (!options.selected_sort && options.sort[0][obj['field']] != undefined) {
+                if (!options.selected_sort &&
+                    options.sort[0][obj['field']] != undefined) {
                     selected = 'selected=""';
                 }
-                thefacetview += '<option value="' + obj['field'] + '" ' + selected + '">Order by: ' + obj['display'] + '</option>';
+                thefacetview += [
+                    '<option value="',
+                    obj['field'],
+                    '" ',
+                    selected,
+                    '">Order by: ',
+                    obj['display'],
+                    '</option>'
+                ].join('');
             };
             thefacetview += '</select>';
         } else {
             thefacetview += '</div>';
         };
         if ( options.searchbox_fieldselect.length > 0 ) {
-            thefacetview += '<select class="facetview_searchfield" style="border-radius:5px 0px 0px 5px; \
-                -moz-border-radius:5px 0px 0px 5px; -webkit-border-radius:5px 0px 0px 5px; width:100px; margin:0 -2px 21px 0; background:' + options.searchbox_shade + ';">';
-            thefacetview += '<option value="">search all</option>';
+            thefacetview = [
+                thefacetview,
+                '<select class="facetview_searchfield" ',
+                'style="border-radius:5px 0px 0px 5px; -moz-border-radius:5px',
+                ' 0px 0px 5px; -webkit-border-radius:5px 0px 0px 5px; ',
+                'width:100px; margin:0 -2px 21px 0; background:',
+                options.searchbox_shade,
+                ';"><option value="">search all</option>'
+            ].join('');
             for ( var each = 0; each < options.searchbox_fieldselect.length; each++ ) {
                 var obj = options.searchbox_fieldselect[each];
                 thefacetview += '<option value="' + obj['field'] + '">' + obj['display'] + '</option>';
             };
             thefacetview += '</select>';
         };
-        thefacetview += '<input type="text" class="facetview_freetext span4" style="display:inline-block; margin:0 0 21px 0; background:' + options.searchbox_shade + '; width:290px" name="q" \
-            value="" placeholder="search term" />';
+        thefacetview += [
+            '<input type="text" class="facetview_freetext span4" ',
+            'style="display:inline-block; margin:0 0 21px 0; background:',
+            options.searchbox_shade,
+            '; width:290px" name="q" value="" placeholder="search term" />'
+        ].join('');
         if ( options.sharesave_link ) {
-            thefacetview += '<a class="btn facetview_sharesave" title="share or save this search" style="margin:0 0 21px 5px;" href=""><i class="icon-share-alt"></i></a>';
-            thefacetview += '<div class="facetview_sharesavebox alert alert-info" style="display:none;"> \
-                <button type="button" class="facetview_sharesave close">×</button> \
-                <p>Share or save this search:</p> \
-                <textarea class="facetview_sharesaveurl" style="width:100%;height:100px;">http://' + window.location.host +
-                window.location.pathname + '?source=' + options.querystring + '</textarea> \
-                </div>';
+            thefacetview = [
+                thefacetview,
+                '<a class="btn facetview_sharesave" title="share or save this',
+                ' search" style="margin:0 0 21px 5px;" href="">',
+                '<i class="icon-share-alt"></i></a>',
+                '<div class="facetview_sharesavebox alert alert-info" ',
+                'style="display:none;"> <button type="button" ',
+                'class="facetview_sharesave close">×</button> <p>Share or save',
+                ' this search:</p> <textarea class="facetview_sharesaveurl" ',
+                'style="width:100%;height:100px;">http://',
+                window.location.host,
+                window.location.pathname,
+                '?source=',
+                options.querystring,
+                '</textarea> </div></div>',
+                thehelp,
+                '<div style="clear:both;" class="btn-toolbar" ',
+                'id="facetview_selectedfilters"></div>'
+            ].join('');
         }
-        thefacetview += '</div>';
-        thefacetview += thehelp;
-        thefacetview += '<div style="clear:both;" class="btn-toolbar" id="facetview_selectedfilters"></div>';
         options.pager_on_top ? thefacetview += '<div class="facetview_metadata" style="margin-top:20px;"></div>' : "";
         thefacetview += options.searchwrap_start + options.searchwrap_end;
         thefacetview += '<div class="facetview_metadata"></div></div></div></div>';
@@ -1911,15 +2016,22 @@ remain visible even if there is only one possible value.
                     delete options.source;
                 }
 
-                // set any default search values into the search bar and create any required filters
+                // set any default search values into the search bar and create
+                // any required filters
                 if ( options.searchbox_class.length == 0 ) {
                     options.q != "" ? $('.facetview_freetext', obj).val(options.q) : "";
                     buildfilters();
-                    $('.facetview_freetext', obj).bindWithDelay('keyup',do_special_search,options.freetext_submit_delay);
+                    $('.facetview_freetext', obj).bindWithDelay(
+                        'keyup',
+                        do_special_search,
+                        options.freetext_submit_delay);
                 } else {
                     options.q != "" ? $(options.searchbox_class).last().val(options.q) : "";
                     buildfilters();
-                    $(options.searchbox_class).bindWithDelay('keyup',dosearch,options.freetext_submit_delay);
+                    $(options.searchbox_class).bindWithDelay(
+                        'keyup',
+                        dosearch,
+                        options.freetext_submit_delay);
                 }
 
                 options.source || options.initialsearch ? dosearch() : "";
