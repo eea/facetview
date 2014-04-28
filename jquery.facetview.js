@@ -536,9 +536,38 @@ remain visible even if there is only one possible value.
 
         }
 
+        // function that compares two strings
+        var sortstrasc = function(a,b) {
+                var len = a.indexOf('(') || a.length;
+                a = a.substring(0, len);
+                len = b.indexOf('(') || b.length;
+                b = b.substring(0, len);
+
+                if(a < b)
+                    return  -1;
+                return 1;
+        };
+
+        // function that compares the number of results from the "(<NUMBER>)"
+        // part of the value
+        var sortnumdessc = function(a,b) {
+            var start = a.indexOf('(') || a.length;
+            var stop = a.indexOf(')') || a.length;
+            a = parseInt(a.substring(start + 1, stop));
+            start = b.indexOf('(') || b.length;
+            stop = b.indexOf(')') || b.length;
+            b = parseInt(b.substring(start + 1, stop));
+
+            return b-a;
+        };
+
         // function to perform for sorting of filters
         var sortfilters = function(event) {
             event.preventDefault();
+            var tabID = 'facetview_' + $(this).attr('href').replace(/\./gi,'_').replace(/\:/gi,'_');
+            var table = $('table[id^="' + tabID + '"]');
+
+
             var sortwhat = $(this).attr('href');
             var which = 0;
             for ( var i = 0; i < options.facets.length; i++ ) {
@@ -549,11 +578,21 @@ remain visible even if there is only one possible value.
                     }
                 }
             }
+
             // iterate to next sort type on click. order is term, rterm, count, rcount
             if ( $(this).hasClass('facetview_term') ) {
                 options.facets[which]['order'] = 'reverse_term';
                 $(this).html('a-z <i class="icon-arrow-up"></i>');
                 $(this).removeClass('facetview_term').addClass('facetview_rterm');
+                table.stupidtable({
+                "string":function(a,b) {
+                   /* if(a == "Product Type")
+                        return 1;
+                    if(b == "Product Type")
+                        return -1;*/
+                    return sortstrasc(a,b);
+                }
+            });
             } else if ( $(this).hasClass('facetview_rterm') ) {
                 options.facets[which]['order'] = 'count';
                 $(this).html('count <i class="icon-arrow-down"></i>');
@@ -562,12 +601,25 @@ remain visible even if there is only one possible value.
                 options.facets[which]['order'] = 'reverse_count';
                 $(this).html('count <i class="icon-arrow-up"></i>');
                 $(this).removeClass('facetview_count').addClass('facetview_rcount');
+                table.stupidtable({
+                "string":function(a,b) {
+                   /* if(a == "Product Type")
+                        return 1;
+                    if(b == "Product Type")
+                        return -1;*/
+                    return sortnumdesc(a,b);
+                }
+            });
             } else if ( $(this).hasClass('facetview_rcount') ) {
                 options.facets[which]['order'] = 'term';
                 $(this).html('a-z <i class="icon-arrow-down"></i>');
                 $(this).removeClass('facetview_rcount').addClass('facetview_term');
             }
-            dosearch();
+
+            var toSort = $('.facetview_sortfacet')[which];
+            $(toSort).trigger("click");
+
+            //dosearch();*/
         };
 
         // adjust how many results are shown
@@ -710,7 +762,7 @@ remain visible even if there is only one possible value.
                         predicate,
                         '" href="',
                         dict,
-                        '">',
+                        '"> ',
                         dict,
                         ' (0)</a></td></tr>'
                     ].join("");
@@ -779,6 +831,11 @@ remain visible even if there is only one possible value.
                         '<table id="facetview_{{FILTER_NAME}}" ',
                         'class="facetview_filters table table-bordered ',
                         'table-condensed table-striped" style="display:none;"> ',
+                        '<thead style="display:none" id="meme"> <tr>',
+                        '<th class="facetview_sortfacet" rel="',
+                        current_filter['field'],
+                        '" data-sort="string"> {{FILTER_DISPLAY}} ',
+                        '</th></tr></thead>',
                         '<tr><td><a class="facetview_filtershow" title="filter ',
                         'by {{FILTER_DISPLAY}}" rel="{{FILTER_NAME}}"',
                         'style="color:#333; font-weight:bold;" href=""><i ',
@@ -1210,7 +1267,7 @@ remain visible even if there is only one possible value.
                         facet,
                         '" href="',
                         item,
-                        '">',
+                        '"> ',
                         item,
                         ' (',
                         records[item],
@@ -1298,7 +1355,7 @@ remain visible even if there is only one possible value.
                         facet,
                         '" href="',
                         records[item]['value'],
-                        '">',
+                        '"> ',
                         records[item]['display'],
                         '</a></td></tr>'
                     ].join("");
