@@ -520,6 +520,62 @@ remain visible even if there is only one possible value.
             }
         };
 
+        // show the filter values - the tree version
+        var showfiltervalues = function(event) {
+            event.preventDefault();
+            var these = $(this);
+            if ( these.hasClass('facetview_open') ) {
+                these.removeClass('facetview_open');
+                these.siblings().hide();
+                these.siblings('.facetview_tree').jstree('open_all');
+            } else {
+                these.addClass('facetview_open');
+                these.siblings('.facetview_tree').jstree('close_all');
+                these.siblings().show();
+            }
+        };
+
+        //recursive function that returns the json in a hierarchy
+        var getJson = function(value, property) {
+            var jsonval = [];
+            if (typeof value === 'string') {
+                jsonval.push(
+                    {
+                        'text': value + ' (0)',
+                        'li_attr' : {
+                            'rel' : property,
+                            'class' : 'facetview_leaf_filterchoice',
+                            'title' : value
+                        }
+                    }
+                );
+                return jsonval;
+            }
+            if(value instanceof Array) {
+                for (var element in value) {
+                    jsonval = jsonval.concat(getJson(value[element], property));
+                }
+                return jsonval;
+            }
+            for (var element in value) {
+                jsonval.push({
+                    'text':element + ' (0)',
+                    'state' : {
+                        'opened' : true,
+                        'selected' : false
+                    },
+                    'li_attr' : {
+                        'rel' : property,
+                        'class' : 'facetview_tree_filterchoice',
+                        'title' : element
+                    },
+                    'children': getJson(value[element], property),
+
+                });
+            }
+            return jsonval;
+        };
+
         // function to switch filters to OR instead of AND
         var orfilters = function(event) {
             event.preventDefault();
@@ -543,22 +599,23 @@ remain visible even if there is only one possible value.
                 len = b.indexOf('(') || b.length;
                 b = b.substring(0, len);
 
-                if(a < b)
+                if(a < b) {
                     return  -1;
+                }
                 return 1;
         };
 
         // function that compares the number of results from the "(<NUMBER>)"
         // part of the value
-        var sortnumdessc = function(a,b) {
+        var sortnumdesc = function(a,b) {
             var start = a.indexOf('(') || a.length;
             var stop = a.indexOf(')') || a.length;
             a = parseInt(a.substring(start + 1, stop));
             start = b.indexOf('(') || b.length;
             stop = b.indexOf(')') || b.length;
             b = parseInt(b.substring(start + 1, stop));
-
             return b-a;
+
         };
 
         // function to perform for sorting of filters
@@ -566,8 +623,6 @@ remain visible even if there is only one possible value.
             event.preventDefault();
             var tabID = 'facetview_' + $(this).attr('href').replace(/\./gi,'_').replace(/\:/gi,'_');
             var table = $('table[id^="' + tabID + '"]');
-
-
             var sortwhat = $(this).attr('href');
             var which = 0;
             for ( var i = 0; i < options.facets.length; i++ ) {
@@ -584,15 +639,6 @@ remain visible even if there is only one possible value.
                 options.facets[which]['order'] = 'reverse_term';
                 $(this).html('a-z <i class="icon-arrow-up"></i>');
                 $(this).removeClass('facetview_term').addClass('facetview_rterm');
-                table.stupidtable({
-                "string":function(a,b) {
-                   /* if(a == "Product Type")
-                        return 1;
-                    if(b == "Product Type")
-                        return -1;*/
-                    return sortstrasc(a,b);
-                }
-            });
             } else if ( $(this).hasClass('facetview_rterm') ) {
                 options.facets[which]['order'] = 'count';
                 $(this).html('count <i class="icon-arrow-down"></i>');
@@ -601,25 +647,13 @@ remain visible even if there is only one possible value.
                 options.facets[which]['order'] = 'reverse_count';
                 $(this).html('count <i class="icon-arrow-up"></i>');
                 $(this).removeClass('facetview_count').addClass('facetview_rcount');
-                table.stupidtable({
-                "string":function(a,b) {
-                   /* if(a == "Product Type")
-                        return 1;
-                    if(b == "Product Type")
-                        return -1;*/
-                    return sortnumdesc(a,b);
-                }
-            });
             } else if ( $(this).hasClass('facetview_rcount') ) {
                 options.facets[which]['order'] = 'term';
                 $(this).html('a-z <i class="icon-arrow-down"></i>');
                 $(this).removeClass('facetview_rcount').addClass('facetview_term');
             }
 
-            var toSort = $('.facetview_sortfacet')[which];
-            $(toSort).trigger("click");
-
-            //dosearch();*/
+            dosearch();
         };
 
         // adjust how many results are shown
@@ -823,117 +857,90 @@ remain visible even if there is only one possible value.
                 options.static_filters.length > 0) {
 
                 var filters = options.facets;
-                var thefilters = '';
-                for ( var idx = 0; idx < filters.length; idx++ ) {
-                    var current_filter = filters[idx];
-                    //Add the facet's title and options
-                    var _filterTmpl = [
-                        '<table id="facetview_{{FILTER_NAME}}" ',
-                        'class="facetview_filters table table-bordered ',
-                        'table-condensed table-striped" style="display:none;"> ',
-                        '<thead style="display:none" id="meme"> <tr>',
-                        '<th class="facetview_sortfacet" rel="',
-                        current_filter['field'],
-                        '" data-sort="string"> {{FILTER_DISPLAY}} ',
-                        '</th></tr></thead>',
-                        '<tr><td><a class="facetview_filtershow" title="filter ',
-                        'by {{FILTER_DISPLAY}}" rel="{{FILTER_NAME}}"',
-                        'style="color:#333; font-weight:bold;" href=""><i ',
-                        'class="icon-plus"></i> {{FILTER_DISPLAY}} </a> ',
-                        '<div class="btn-group facetview_filteroptions" ',
+
+                //Create a jstree from the hoerarchy, that will be populated
+                //with the results
+                var trees = $('#facetview_trees');
+                var html = '';
+                for (var prop in options.hierarchy) {
+                    var valuetext = '';
+                    var ord = '';
+                    for (var idx in filters) {
+                        var facet = filters[idx];
+                        if (facet.field == prop) {
+                            valuetext = facet.display;
+                            ord = facet.order;
+                            break;
+                        }
+                    }
+                    html = [html,
+                        '<div class="facetview_filter"> <a class="',
+                        'facetview_showtree" title="',
+                        prop,
+                        '" id="',
+                        prop,
+                        '">',
+                        valuetext,
+                        ' </a> ',
+                        '<div class="btn-group facetview_filter_options" ',
                         'style="display:none; margin-top:5px;">',
-                        '<a class="btn btn-small facetview_learnmore" ',
-                        'title="click to view search help information" ',
-                        'href="#"><b>?</b></a> <a class="btn btn-small ',
-                        'facetview_morefacetvals" title="filter list size" ',
-                        'rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">',
-                        '{{FILTER_HOWMANY}}</a> <a class="btn btn-small ',
-                        'facetview_sort {{FILTER_SORTTERM}}" title="filter ',
-                        'value order" href="{{FILTER_EXACT}}">',
-                        '{{FILTER_SORTCONTENT}}</a> <a class="btn btn-small ',
-                        'facetview_or" title="select another option from this',
-                        ' filter" rel="AND" href="{{FILTER_EXACT}}" ',
-                        'style="color:#aaa;">OR</a> <a class="btn btn-small ',
-                        'facetview_moreless" title="show more or less" ',
-                        'rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">More</a> '
-                    ].join("");
-                    if ( options.enable_rangeselect ) {
-                        _filterTmpl = [
-                            _filterTmpl,
-                            '<a class="btn btn-small facetview_facetrange" ',
-                            'title="make a range selection on this filter" ',
-                            'rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}" ',
-                            'style="color:#aaa;">range</a>'
-                        ].join("");
-                    }
+                        '<a class="btn btn-small facetview_sort ',
+                        ord,
+                        ' title="filter value order" href="',
+                        prop,
+                        '">',
+                        ord,
+                        '</a> <a class="btn btn-small facetview_or" ',
+                        'title="select another option from this filter" ',
+                        'rel="AND" href="',
+                        prop,
+                        '" style="color:#aaa;">OR</a> </div>',
+                        '<div class="facetview_tree" style="display:none" rel="',
+                        prop,
+                        '"></div></div>'
+                        ].join('');
+                }
+                trees.append(html);
 
-                    if(options.hierarchy[current_filter['field']]) {
-                        _filterTmpl = [
-                            _filterTmpl,
-                            buildHierarchy(current_filter['field'])
-                        ].join("");
+                for (var prop in options.hierarchy) {
+                    var tree = $('.facetview_tree[rel="'+ prop + '"]');
+                    var children = options.hierarchy[prop];
 
-                    }
-                    _filterTmpl +='</div> </td></tr> </table>';
+                    tree
+                        .jstree({
+                            'plugins' : ['search', 'sort', 'json', 'ui'],
+                            'core' : {
+                                'data' : function (obj, cb) {
+                                cb.call(this, getJson(children, prop));
+                                },
+                                'check_callback' : true,
+                                'themes' : { 'icons' : false }
+                            }
+                        })
+                        .bind("select_node.jstree", function (event, data) {
+                            var attributes = data.node.li_attr;
+                            if(attributes.class.indexOf('leaf') > -1){
+                                clickfilterchoice(false, attributes.rel, attributes.title);
+                                dosearch();
+                            } else {
+                                //TODO Add defined behavior here for click parent
+                            }
+                        })
+                        .on('open_node.jstree', function (event, data) {
 
-                    _filterTmpl = _filterTmpl
-                        .replace(
-                            /{{FILTER_NAME}}/g,
-                            current_filter['field']
-                                .replace(/\./gi,'_')
-                                .replace(/\:/gi,'_'))
-                        .replace(/{{FILTER_EXACT}}/g, current_filter['field']);
-                    thefilters += _filterTmpl;
-                    if ('size' in current_filter ) {
-                        thefilters = thefilters.replace(
-                            /{{FILTER_HOWMANY}}/gi, current_filter['size']);
-                    } else {
-                        thefilters = thefilters.replace(
-                            /{{FILTER_HOWMANY}}/gi, 10);
-                    };
-                    if ( 'order' in current_filter ) {
-                        if ( current_filter['order'] == 'term' ) {
-                            thefilters = thefilters.replace(
-                                /{{FILTER_SORTTERM}}/g, 'facetview_term');
-                            thefilters = thefilters.replace(
-                                /{{FILTER_SORTCONTENT}}/g,
-                                'a-z <i class="icon-arrow-down"></i>');
-                        } else if ( current_filter['order'] == 'reverse_term' ) {
-                            thefilters = thefilters.replace(
-                                /{{FILTER_SORTTERM}}/g, 'facetview_rterm');
-                            thefilters = thefilters.replace(
-                                /{{FILTER_SORTCONTENT}}/g,
-                                'a-z <i class="icon-arrow-up"></i>');
-                        } else if ( current_filter['order'] == 'count' ) {
-                            thefilters = thefilters.replace(
-                                /{{FILTER_SORTTERM}}/g, 'facetview_count');
-                            thefilters = thefilters.replace(
-                                /{{FILTER_SORTCONTENT}}/g,
-                                'count <i class="icon-arrow-down"></i>');
-                        } else if ( current_filter['order'] == 'reverse_count' ) {
-                            thefilters = thefilters.replace(
-                                /{{FILTER_SORTTERM}}/g, 'facetview_rcount');
-                            thefilters = thefilters.replace(
-                                /{{FILTER_SORTCONTENT}}/g,
-                                'count <i class="icon-arrow-up"></i>');
-                        };
-                    } else {
-                        thefilters = thefilters.replace(
-                            /{{FILTER_SORTTERM}}/g, 'facetview_count');
-                        thefilters = thefilters.replace(
-                            /{{FILTER_SORTCONTENT}}/g,
-                            'count <i class="icon-arrow-down"></i>');
-                    };
-                    thefilters = thefilters.replace(/{{FACET_IDX}}/gi,idx);
-                    if ('display' in current_filter) {
-                        thefilters = thefilters.replace(
-                            /{{FILTER_DISPLAY}}/g, current_filter['display']);
-                    } else {
-                        thefilters = thefilters.replace(
-                            /{{FILTER_DISPLAY}}/g, current_filter['field']);
-                    };
-                };
-                $('#facetview_filters', obj).html("").append(thefilters);
+                            var children = data.node.children;
+                            var len = children.length;
+                            for (var idx = 0; idx < len; idx++) {
+                                var child = $('#' + children[idx]);
+                                if(child.children('a.jstree-anchor').text().indexOf('(0)') != -1) {
+                                    child.hide();
+                                }
+                            }
+                        });
+
+                    //bind function to display tree
+                    $('.facetview_showtree', obj).bind('click',showfiltervalues);
+                }
 
                 //Add static filters
                 filters = options.static_filters;
@@ -999,6 +1006,7 @@ remain visible even if there is only one possible value.
                             /{{LIST_TYPE}}/g, 'multiple');
                     };
 
+
                 };
                 $('#facetview_s_filters', obj).html("").append(staticfilters);
                 $('.facetview_morefacetvals', obj).bind('click',morefacetvals);
@@ -1011,7 +1019,10 @@ remain visible even if there is only one possible value.
                 $('.facetview_moreless', obj).bind('click',showmoreless);
                 $('.facetview_filterparent', obj).bind('click',showchildren);
                 options.description ? $('#facetview_filters', obj).append('<div>' + options.description + '</div>') : "";
+
+
             };
+
         };
 
         // trigger a search when a filter choice is clicked
@@ -1043,8 +1054,8 @@ remain visible even if there is only one possible value.
                 ' href="' + href + '">' +
                 href + ' <i class="icon-white icon-remove" style="margin-top:1px;"></i></a>';
 
-            if ( $('#facetview_group_' + relclean, obj).length ) {
-                $('#facetview_group_' + relclean, obj).append(newobj);
+            if ( $('div[id="facetview_group_' + relclean + '"]', obj).length ) {
+                $('div[id="facetview_group_' + relclean + '"]', obj).append(newobj);
             } else {
                 var pobj = '<div id="facetview_group_' + relclean + '" class="btn-group">';
                 pobj += newobj + '</div>';
@@ -1281,7 +1292,7 @@ remain visible even if there is only one possible value.
                             item +
                             '"]');
                         if (empty.length > 0) {
-                            empty.text(item + " (" + records[item] + ")");
+                            empty.text(' ' + item + " (" + records[item] + ")");
                             empty.parent().show();
                         } else {
                             facet_filter.append(append);
@@ -1310,6 +1321,67 @@ remain visible even if there is only one possible value.
                         ].join('');
                         $(parents).get(idx).lastChild.nodeValue = text;
                     }
+                }
+
+                //set the values for the jstree from the results
+                if(options.hierarchy) {
+                    var tree = $('.facetview_tree[rel="' + facet + '"]');
+                    tree.jstree('open_all');
+                    tree.find('.jstree-leaf').show();
+                    //first set all values with count 0
+                    var leaves = $('.jstree-leaf');
+                    for (var id = 0; id < leaves.length; id++) {
+                        var leaf = leaves[id];
+                        tree.jstree(true).set_text($(leaf), leaf.title + ' (0)');
+                    }
+                    //set the values for the leaves
+                    for(var item in records) {
+                        var record = records[item];
+                        var inTree = $('.jstree-leaf[title="' + item + '"]');
+
+                        if(inTree.length > 0) {
+                            tree.jstree(true).set_text(inTree, item + ' (' + record + ')');
+                        } else {
+                            var newNode = {
+                                state : 'open',
+                                text : item + ' (' + record + ')',
+                                li_attr : {
+                                    'rel' : facet,
+                                    'class' : 'facetview_tree_filterchoice leaf',
+                                    'title' : item
+                                }
+                            };
+                            var leafID = tree.jstree(true).create_node(tree, newNode);
+                        }
+                    }
+                    //set the values for the parents
+                    var values = $('.facetview_tree_filterchoice[rel="' + facet + '"]:not(.jstree-leaf)');
+
+                    for (var id = 0; id < values.length; id++ ) {
+                        var value = $(values[id]);
+                        var result = 0;
+                        var leafChildren = value.find('.jstree-leaf');
+                        for (var idx = 0; idx < leafChildren.length; idx++) {
+                                var val = leafChildren[idx].innerText;
+                                var start = val.indexOf('(');
+                                var stop = val.indexOf(')');
+                                val = parseInt(val.substring(start + 1, stop)) || 0;
+                                result += val;
+                        }
+                        if(result >= 0)
+                            tree.jstree(true).set_text(value, value.attr('title') + ' (' + result + ')');
+                    }
+                    //hide the ones with no values
+                    values = $('.jstree-node[rel="' + facet + '"]');
+                    for (var id = 0; id < values.length; id++) {
+                        var value = values[id];
+                        var text = $(value).children('a.jstree-anchor').text();
+                        if (text.indexOf('(0)') != -1) {
+                            $(value).hide();
+                        }
+                    }
+                    tree.jstree('close_all');
+
                 }
 
                 if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
@@ -1943,6 +2015,7 @@ remain visible even if there is only one possible value.
                 '<div class="span3"><div id="facetview_filters" ',
                 'style="padding-top:45px;"></div>',
                 '<div id="facetview_s_filters" style="padding-top:5px;">',
+                '</div><div id="facetview_trees" style="padding-top:5px;">',
                 '</div></div><div class="span9" id="facetview_rightcol">'
             ].join('');
         } else {
