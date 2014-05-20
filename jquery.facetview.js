@@ -566,7 +566,7 @@ remain visible even if there is only one possible value.
                     },
                     'li_attr' : {
                         'rel' : property,
-                        'class' : 'facetview_tree_filterchoice',
+                        'class' : 'facetview_filterchoice',
                         'title' : element
                     },
                     'children': getJson(value[element], property),
@@ -618,14 +618,71 @@ remain visible even if there is only one possible value.
 
         };
 
+        function createtreefromdata(tree, ord, values) {
+            tree.jstree({
+                'plugins' : ['sort', 'themes'],
+                'core' : {
+                    'animation': 0,
+                    'data' : values,
+                    'check_callback' : true,
+                    'themes' : { 'icons' : false }
+                },
+                'sort' :  function (a, b) {
+                    var a_text = this.get_node(a).text;
+                    var b_text = this.get_node(b).text;
+                    if (ord === 'term') {
+                        return a_text > b_text ? 1 : -1
+                    } else if (ord === 'reverse_term') {
+                        return a_text > b_text ? -1 : 1
+                    } else {
+                        var a_size = a_text.substring(
+                            a_text.indexOf('(') + 1,
+                            a_text.indexOf(')'));
+                        a_size = parseInt(a_size);
+
+                        var b_size = b_text.substring(
+                            b_text.indexOf('(') + 1,
+                            b_text.indexOf(')'));
+                        b_size = parseInt(b_size);
+                        if( ord === 'count') {
+                            return a_size - b_size;
+                        }
+                        else {
+                            return b_size - a_size;
+                        }
+                    }
+                }
+            })
+            .bind("select_node.jstree", function (event, data) {
+                var attributes = data.node.li_attr;
+                if(attributes.class.indexOf('leaf') > -1){
+                    clickfilterchoice(false, attributes.rel, attributes.title);
+                    dosearch();
+                } else {
+                    //TODO Add defined behavior here for click parent
+                }
+            })
+            .on('open_node.jstree', function (event, data) {
+                var children = data.node.children;
+                var len = children.length;
+                for (var idx = 0; idx < len; idx++) {
+                    var child = $('#' + children[idx]);
+                    if(child.children('a.jstree-anchor').text().indexOf('(0)') != -1) {
+                        child.hide();
+                    }
+                }
+            });
+        }
+
         // function to perform for sorting of filters
         var sortfilters = function(event) {
             event.preventDefault();
-            var tabID = 'facetview_' + $(this).attr('href').replace(/\./gi,'_').replace(/\:/gi,'_');
-            var table = $('table[id^="' + tabID + '"]');
+
             var sortwhat = $(this).attr('href');
+            var tree = $('.facetview_tree[rel="' + sortwhat + '"]');
             var which = 0;
-            for ( var i = 0; i < options.facets.length; i++ ) {
+            var length = options.facets.length;
+            for ( var i = 0; i < length; i++ ) {
                 var item = options.facets[i];
                 if ('field' in item) {
                     if ( item['field'] == sortwhat) {
@@ -653,7 +710,10 @@ remain visible even if there is only one possible value.
                 $(this).removeClass('facetview_rcount').addClass('facetview_term');
             }
 
-            dosearch();
+            var thejson = tree.jstree(true).get_json('#');
+            tree.jstree('destroy');
+            createtreefromdata(tree, options.facets[which]['order'], thejson);
+
         };
 
         // adjust how many results are shown
@@ -851,14 +911,19 @@ remain visible even if there is only one possible value.
             }
         };
 
+        var createTree = function() {
+            var trees = $('#facetview_trees');
+            var html = '';
+
+        };
+
         // pass a list of filters to be displayed
         var buildfilters = function() {
-            if (options.facets.length > 0 ||
-                options.static_filters.length > 0) {
+            if (options.facets.length > 0) {
 
                 var filters = options.facets;
 
-                //Create a jstree from the hoerarchy, that will be populated
+                //Create a jstree from the hierarchy, that will be populated
                 //with the results
                 var trees = $('#facetview_trees');
                 var html = '';
@@ -884,12 +949,12 @@ remain visible even if there is only one possible value.
                         ' </a> ',
                         '<div class="btn-group facetview_filter_options" ',
                         'style="display:none; margin-top:5px;">',
-                        '<a class="btn btn-small facetview_sort ',
+                        '<a class="btn btn-small facetview_sort facetview_term ',
                         ord,
-                        ' title="filter value order" href="',
+                        '" title="filter value order" href="',
                         prop,
                         '">',
-                        ord,
+                        'a-z <i class="icon-arrow-down"></i>',
                         '</a> <a class="btn btn-small facetview_or" ',
                         'title="select another option from this filter" ',
                         'rel="AND" href="',
@@ -905,121 +970,25 @@ remain visible even if there is only one possible value.
                 for (var prop in options.hierarchy) {
                     var tree = $('.facetview_tree[rel="'+ prop + '"]');
                     var children = options.hierarchy[prop];
-
-                    tree
-                        .jstree({
-                            'plugins' : ['search', 'sort', 'json', 'ui'],
-                            'core' : {
-                                'data' : function (obj, cb) {
-                                cb.call(this, getJson(children, prop));
-                                },
-                                'check_callback' : true,
-                                'themes' : { 'icons' : false }
+                    var tree_json = getJson(children, prop);
+                    var which = 0;
+                    for ( var i = 0; i < options.facets.length; i++ ) {
+                        var item = options.facets[i];
+                        if ('field' in item) {
+                            if ( item['field'] == prop) {
+                                which = i;
                             }
-                        })
-                        .bind("select_node.jstree", function (event, data) {
-                            var attributes = data.node.li_attr;
-                            if(attributes.class.indexOf('leaf') > -1){
-                                clickfilterchoice(false, attributes.rel, attributes.title);
-                                dosearch();
-                            } else {
-                                //TODO Add defined behavior here for click parent
-                            }
-                        })
-                        .on('open_node.jstree', function (event, data) {
+                        }
+                    }
 
-                            var children = data.node.children;
-                            var len = children.length;
-                            for (var idx = 0; idx < len; idx++) {
-                                var child = $('#' + children[idx]);
-                                if(child.children('a.jstree-anchor').text().indexOf('(0)') != -1) {
-                                    child.hide();
-                                }
-                            }
-                        });
+                    createtreefromdata(tree, options.facets[which].order, getJson(children, prop));
 
-                    //bind function to display tree
-                    $('.facetview_showtree', obj).bind('click',showfiltervalues);
                 }
 
-                //Add static filters
-                filters = options.static_filters;
-                staticfilters = '';
-                for ( var idx = 0; idx < filters.length; idx++ ) {
-                    var current_filter = filters[idx];
-                     var _filterTmpl = [
-                        '<table id="facetview_{{FILTER_NAME}}" ',
-                        'class="facetview_s_filters table table-bordered ',
-                        'table-condensed table-striped"> <tr><td>',
-                        '<a class="facetview_filtershow" title="filter by ',
-                        '{{FILTER_DISPLAY}}" rel="{{FILTER_NAME}}" ',
-                        'style="color:#333; font-weight:bold;" href="">',
-                        '<i class="icon-plus"></i> {{FILTER_DISPLAY}} </a> ',
-                        '<div class="facetview_listoptions" ',
-                        'style="display:none;margin-top:5px;"> ',
-                        '<a class="facetview_listtype" title="list type" ',
-                        'rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}">',
-                        '{{LIST_TYPE}}</a> </div> ',
-                        '<div class="btn-group facetview_filteroptions" ',
-                        'style="display:none; margin-top:5px;"> ',
-                        '<a class="btn btn-small facetview_morefacetvals" ',
-                        'title="filter list size" rel="{{FACET_IDX}}" ',
-                        'href="{{FILTER_EXACT}}">{{FILTER_HOWMANY}}</a> '
-                    ].join("");
-                    if ( options.enable_rangeselect ) {
-                        _filterTmpl = [
-                            _filterTmpl,
-                            '<a class="btn btn-small facetview_facetrange" ',
-                            'title="make a range selection on this filter" ',
-                            'rel="{{FACET_IDX}}" href="{{FILTER_EXACT}}" ',
-                            'style="color:#aaa;">range</a>'
-                        ].join("");
-                    }
-                    _filterTmpl +='</div> </td></tr> </table>';
-
-                    _filterTmpl = _filterTmpl
-                        .replace(
-                            /{{FILTER_NAME}}/g,
-                            current_filter['field']
-                                .replace(/\./gi,'_')
-                                .replace(/\:/gi,'_'))
-                        .replace(/{{FILTER_EXACT}}/g, current_filter['field']);
-                    staticfilters += _filterTmpl;
-                    staticfilters = staticfilters.replace(
-                        /{{FILTER_HOWMANY}}/gi, current_filter.length);
-
-                    staticfilters = staticfilters.replace(/{{FACET_IDX}}/gi,idx);
-                    if ('display' in current_filter) {
-                        staticfilters =
-                        staticfilters.replace(
-                            /{{FILTER_DISPLAY}}/g, current_filter['display']);
-                    } else {
-                        staticfilters =
-                        staticfilters.replace(
-                            /{{FILTER_DISPLAY}}/g, current_filter['field']);
-                    };
-                    if ( 'type' in current_filter ) {
-                        staticfilters = staticfilters.replace(
-                            /{{LIST_TYPE}}/g, current_filter['type']['value']);
-                    } else {
-                        staticfilters = staticfilters.replace(
-                            /{{LIST_TYPE}}/g, 'multiple');
-                    };
-
-
-                };
-                $('#facetview_s_filters', obj).html("").append(staticfilters);
-                $('.facetview_morefacetvals', obj).bind('click',morefacetvals);
-                $('.facetview_facetrange', obj).bind('click',facetrange);
                 $('.facetview_sort', obj).bind('click',sortfilters);
                 $('.facetview_or', obj).bind('click',orfilters);
-                $('.facetview_filtershow', obj).bind('click',showfiltervals);
-                $('.facetview_learnmore', obj).unbind('click',learnmore);
-                $('.facetview_learnmore', obj).bind('click',learnmore);
-                $('.facetview_moreless', obj).bind('click',showmoreless);
-                $('.facetview_filterparent', obj).bind('click',showchildren);
-                options.description ? $('#facetview_filters', obj).append('<div>' + options.description + '</div>') : "";
-
+                $('.facetview_showtree', obj).bind('click',showfiltervalues);
+                options.description ? $('#facetview_trees', obj).append('<div>' + options.description + '</div>') : "";
 
             };
 
@@ -1037,12 +1006,6 @@ remain visible even if there is only one possible value.
             // Do nothing if element already exists.
             if( $('a.facetview_filterselected[href="'+href+'"][rel="'+rel+'"]').length ){
                 return null;
-            }
-
-            //If the list is of type oneorless, deselect previous choice
-            if ( $('a.facetview_listtype[href="'+rel+'"]').length &&
-                $('a.facetview_listtype[href="'+rel+'"]').text() == "oneorless"){
-                $('a.facetview_filterselected[rel="'+rel+'"]').remove();
             }
 
             var newobj = '<a class="facetview_filterselected facetview_clear btn btn-info';
@@ -1268,61 +1231,9 @@ remain visible even if there is only one possible value.
                 var current_filter = options.facets[each];
                 var facet = current_filter['field'];
                 var facetclean = current_filter['field'].replace(/\./gi,'_').replace(/\:/gi,'_');
-                var facet_filter = $('[id="facetview_'+facetclean+'"]', obj);
-                facet_filter.children().find('.facetview_filtervalue').remove();
                 var records = data["facets"][ facet ];
-                for ( var item in records ) {
-                    var append = [
-                        '<tr class="facetview_filtervalue" style="display:none;">',
-                        '<td><a class="facetview_filterchoice" rel="',
-                        facet,
-                        '" href="',
-                        item,
-                        '"> ',
-                        item,
-                        ' (',
-                        records[item],
-                        ')</a></td></tr>'
-                    ].join("");
-                    if(options.hierarchy) {
-                        var empty = $(
-                            '.facetview_filterchoice[rel="' +
-                            facet +
-                            '"][href="' +
-                            item +
-                            '"]');
-                        if (empty.length > 0) {
-                            empty.text(' ' + item + " (" + records[item] + ")");
-                            empty.parent().show();
-                        } else {
-                            facet_filter.append(append);
-                        }
-                    } else {
-                        facet_filter.append(append);
-                    }
-                }
 
-                // set count value for hierarchic values
-                if(options.hierarchy) {
-                    var parents = $('.facetview_filterparent');
-                    for (var idx = 0; idx< parents.length; idx++) {
-                        var text = $(parents[idx]).text();
-                        var start = text.indexOf('(');
-                        if (start < 0) {
-                            text += '(';
-                            start = text.length;
-                        }
-
-                        text = text.substring(0,start + 1);
-                        text = [
-                            text,
-                            getValCount($(parents[idx]).siblings()),
-                            ')'
-                        ].join('');
-                        $(parents).get(idx).lastChild.nodeValue = text;
-                    }
-                }
-
+                //These functions slow down the results
                 //set the values for the jstree from the results
                 if(options.hierarchy) {
                     var tree = $('.facetview_tree[rel="' + facet + '"]');
@@ -1330,9 +1241,10 @@ remain visible even if there is only one possible value.
                     tree.find('.jstree-leaf').show();
                     //first set all values with count 0
                     var leaves = $('.jstree-leaf');
-                    for (var id = 0; id < leaves.length; id++) {
+                    var len = leaves.length;
+                    for (var id = 0; id < len; id++) {
                         var leaf = leaves[id];
-                        tree.jstree(true).set_text($(leaf), leaf.title + ' (0)');
+                        tree.jstree(true).rename_node($(leaf), leaf.title + ' (0)');
                     }
                     //set the values for the leaves
                     for(var item in records) {
@@ -1340,22 +1252,22 @@ remain visible even if there is only one possible value.
                         var inTree = $('.jstree-leaf[title="' + item + '"]');
 
                         if(inTree.length > 0) {
-                            tree.jstree(true).set_text(inTree, item + ' (' + record + ')');
+                            tree.jstree(true).rename_node(inTree, item + ' (' + record + ')');
                         } else {
                             var newNode = {
                                 state : 'open',
                                 text : item + ' (' + record + ')',
                                 li_attr : {
                                     'rel' : facet,
-                                    'class' : 'facetview_tree_filterchoice leaf',
+                                    'class' : 'facetview_filterchoice leaf',
                                     'title' : item
                                 }
                             };
-                            var leafID = tree.jstree(true).create_node(tree, newNode);
+                            var leafID = tree.jstree('create_node', '#', newNode, 'last');
                         }
                     }
                     //set the values for the parents
-                    var values = $('.facetview_tree_filterchoice[rel="' + facet + '"]:not(.jstree-leaf)');
+                    var values = $('.facetview_filterchoice[rel="' + facet + '"]:not(.jstree-leaf)');
 
                     for (var id = 0; id < values.length; id++ ) {
                         var value = $(values[id]);
@@ -1369,7 +1281,7 @@ remain visible even if there is only one possible value.
                                 result += val;
                         }
                         if(result >= 0)
-                            tree.jstree(true).set_text(value, value.attr('title') + ' (' + result + ')');
+                            tree.jstree(true).rename_node(value, value.attr('title') + ' (' + result + ')');
                     }
                     //hide the ones with no values
                     values = $('.jstree-node[rel="' + facet + '"]');
@@ -1382,15 +1294,6 @@ remain visible even if there is only one possible value.
                     }
                     tree.jstree('close_all');
 
-                }
-
-                if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
-                    facet_filter.children().find('.facetview_filtervalue').show();
-                    var button = $('.facetview_moreless')[each];
-                    if(button.text == 'More'){
-                        $(button).trigger('click');
-                        $(button).trigger('click');
-                    }
                 }
 
                 //hide hierarchic parents with no results
@@ -1411,45 +1314,6 @@ remain visible even if there is only one possible value.
                 }
             }
 
-            // for each static filter: apped the values
-
-            for (var each = 0; each < options.static_filters.length; each++ ) {
-                var current_filter = options.static_filters[each];
-                var facet= current_filter['field'];
-                var facetclean = current_filter['field'].replace(/\./gi,'_').replace(/\:/gi,'_');
-                var facet_filter = $('[id="facetview_'+facetclean+'"]', obj);
-                facet_filter.children().find('.facetview_filtervalue').remove();
-                var records = current_filter['values'];
-                for ( var item = 0; item < records.length; item ++ ) {
-                    var append = [
-                        '<tr class="facetview_filtervalue" style="display:none;">',
-                        '<td><a class="facetview_filterchoice" rel="',
-                        facet,
-                        '" href="',
-                        records[item]['value'],
-                        '"> ',
-                        records[item]['display'],
-                        '</a></td></tr>'
-                    ].join("");
-                    facet_filter.append(append);
-                }
-                if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
-                    facet_filter.children().find('.facetview_filtervalue').show();
-                }
-            }
-
-            $('.facetview_filterchoice', obj).bind('click',clickfilterchoice);
-            $('.facetview_filters', obj).each(function() {
-                $(this).find('.facetview_filtershow').css({'color':'#333','font-weight':'bold'}).children('i').show();
-
-                var len = $(this).children().find('.facetview_filtervalue').length;
-                if ( len > 1 || (len ==1 && options.permanent_filters) ) {
-                    $(this).show();
-                } else {
-                    //$(this).hide();
-                    $(this).find('.facetview_filtershow').css({'color':'#ccc','font-weight':'normal'}).children('i').hide();
-                };
-            });
 
             // put result metadata on the page
             if ( typeof(options.paging.from) != 'number' ) {
