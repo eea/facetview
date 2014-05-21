@@ -619,6 +619,11 @@ remain visible even if there is only one possible value.
         };
 
         function createtreefromdata(tree, ord, values) {
+            var or_button = tree
+                        .siblings('.facetview_filter_options')
+                            .find('.facetview_or');
+            var or_buttton_rel = or_button.attr('rel');
+
             tree.jstree({
                 'plugins' : ['sort', 'themes'],
                 'core' : {
@@ -659,7 +664,19 @@ remain visible even if there is only one possible value.
                     clickfilterchoice(false, attributes.rel, attributes.title);
                     dosearch();
                 } else {
-                    //TODO Add defined behavior here for click parent
+                    var children = data.node.children_d;
+                    var branch = $('#' + data.node.id);
+                    tree.jstree("open_all", branch);
+                    if(or_buttton_rel == 'AND') {
+                        or_button.trigger('click');
+                    }
+
+                    var len = children.length;
+                    for (var idx = 0; idx < len; idx++) {
+                        var child = $('#' + children[idx]);
+                        clickfilterchoice(false, child.attr('rel'), child.attr('title'));
+                    }
+                    dosearch();
                 }
             })
             .on('open_node.jstree', function (event, data) {
@@ -667,8 +684,12 @@ remain visible even if there is only one possible value.
                 var len = children.length;
                 for (var idx = 0; idx < len; idx++) {
                     var child = $('#' + children[idx]);
-                    if(child.children('a.jstree-anchor').text().indexOf('(0)') != -1) {
-                        child.hide();
+                    if (or_buttton_rel === 'OR') {
+                        child.show();
+                    } else {
+                        if(child.children('a.jstree-anchor').text().indexOf('(0)') != -1) {
+                            child.hide();
+                        }
                     }
                 }
             });
@@ -1284,14 +1305,21 @@ remain visible even if there is only one possible value.
                             tree.jstree(true).rename_node(value, value.attr('title') + ' (' + result + ')');
                     }
                     //hide the ones with no values
-                    values = $('.jstree-node[rel="' + facet + '"]');
-                    for (var id = 0; id < values.length; id++) {
-                        var value = values[id];
-                        var text = $(value).children('a.jstree-anchor').text();
-                        if (text.indexOf('(0)') != -1) {
-                            $(value).hide();
+                    var or_button = tree
+                        .siblings('.facetview_filter_options')
+                            .find('.facetview_or');
+                    var or_buttton_rel = or_button.attr('rel');
+                    if ( or_buttton_rel === 'AND') {
+                        values = $('.jstree-node[rel="' + facet + '"]');
+                        for (var id = 0; id < values.length; id++) {
+                            var value = values[id];
+                            var text = $(value).children('a.jstree-anchor').text();
+                            if (text.indexOf('(0)') != -1) {
+                                $(value).hide();
+                            }
                         }
                     }
+
                     tree.jstree('close_all');
 
                 }
@@ -1300,15 +1328,24 @@ remain visible even if there is only one possible value.
                 if (options.hierarchy) {
                     var parents = $('.facetview_filterparent');
                     for (var idx = 0; idx< parents.length; idx++) {
-                        var text = $(parents[idx]).text();
-                        var start = text.indexOf('(');
-                        var stop = text.indexOf(')');
-                        text = parseInt(text.substring(start + 1, stop)) || 0;
-                        if (text == 0) {
-                            $(parents[idx]).parent().hide();
-                        } else {
-                            $(parents[idx]).parent().show();
+                        var parent = $(parents[idx]);
+                        var text = parent.text();
+                        var rel = parent.attr('rel');
+                        var tree = $('.facetview_tree[rel="' + rel + '"]');
+                        var or_button = tree.siblings('.facetview_filter_options')
+                            .find('.facetview_or');
+                        var or_buttton_rel = or_button.attr('rel');
+                        if(or_buttton_rel === 'AND') {
+                            var start = text.indexOf('(');
+                            var stop = text.indexOf(')');
+                            text = parseInt(text.substring(start + 1, stop)) || 0;
+                            if (text == 0) {
+                                $(parents[idx]).parent().hide();
+                            } else {
+                                $(parents[idx]).parent().show();
+                            }
                         }
+
                     }
 
                 }
