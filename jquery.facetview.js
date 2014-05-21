@@ -619,10 +619,6 @@ remain visible even if there is only one possible value.
         };
 
         function createtreefromdata(tree, ord, values) {
-            var or_button = tree
-                        .siblings('.facetview_filter_options')
-                            .find('.facetview_or');
-            var or_buttton_rel = or_button.attr('rel');
 
             tree.jstree({
                 'plugins' : ['sort', 'themes'],
@@ -659,6 +655,10 @@ remain visible even if there is only one possible value.
                 }
             })
             .bind("select_node.jstree", function (event, data) {
+                var or_button = tree
+                        .siblings('.facetview_filter_options')
+                            .find('.facetview_or');
+                var or_buttton_rel = or_button.attr('rel');
                 var attributes = data.node.li_attr;
                 if(attributes.class.indexOf('leaf') > -1){
                     clickfilterchoice(false, attributes.rel, attributes.title);
@@ -680,6 +680,10 @@ remain visible even if there is only one possible value.
                 }
             })
             .on('open_node.jstree', function (event, data) {
+                var or_button = tree
+                        .siblings('.facetview_filter_options')
+                            .find('.facetview_or');
+                var or_buttton_rel = or_button.attr('rel');
                 var children = data.node.children;
                 var len = children.length;
                 for (var idx = 0; idx < len; idx++) {
