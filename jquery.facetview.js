@@ -60,7 +60,6 @@ jQuery.extend({
                 params[hash[0]] = newval;
             }
         }
-
         return params;
     },
     getUrlVar: function(name){
@@ -661,7 +660,7 @@ remain visible even if there is only one possible value.
                 var or_buttton_rel = or_button.attr('rel');
                 var attributes = data.node.li_attr;
                 if(attributes.class.indexOf('leaf') > -1){
-                    clickfilterchoice(false, attributes.rel, attributes.title);
+                    clickfilterchoice(false, attributes.rel, attributes.title,false);
                     dosearch();
                 } else {
                     var children = data.node.children_d;
@@ -674,7 +673,7 @@ remain visible even if there is only one possible value.
                     var len = children.length;
                     for (var idx = 0; idx < len; idx++) {
                         var child = $('#' + children[idx]);
-                        clickfilterchoice(false, child.attr('rel'), child.attr('title'));
+                        clickfilterchoice(false, child.attr('rel'), child.attr('title'),false);
                     }
                     dosearch();
                 }
@@ -936,12 +935,6 @@ remain visible even if there is only one possible value.
             }
         };
 
-        var createTree = function() {
-            var trees = $('#facetview_trees');
-            var html = '';
-
-        };
-
         // pass a list of filters to be displayed
         var buildfilters = function() {
             if (options.facets.length > 0) {
@@ -963,6 +956,12 @@ remain visible even if there is only one possible value.
                             break;
                         }
                     }
+                    var rel = 'AND';
+                    var style = 'color:#aaa;'
+                    if ( $('.facetview_logic_or[rel="' + prop + '"]').length ) {
+                        rel = 'OR';
+                        style = '';
+                    }
                     html = [html,
                         '<div class="facetview_filter"> <a class="',
                         'facetview_showtree" title="',
@@ -982,15 +981,20 @@ remain visible even if there is only one possible value.
                         'a-z <i class="icon-arrow-down"></i>',
                         '</a> <a class="btn btn-small facetview_or" ',
                         'title="select another option from this filter" ',
-                        'rel="AND" href="',
+                        'rel="',
+                        rel,
+                        '" href="',
                         prop,
-                        '" style="color:#aaa;">OR</a> </div>',
+                        '" style="',
+                        style,
+                        '">OR</a> </div>',
                         '<div class="facetview_tree" style="display:none" rel="',
                         prop,
                         '"></div></div>'
                         ].join('');
                 }
                 trees.append(html);
+
 
                 for (var prop in options.hierarchy) {
                     var tree = $('.facetview_tree[rel="'+ prop + '"]');
@@ -1021,7 +1025,7 @@ remain visible even if there is only one possible value.
 
         // trigger a search when a filter choice is clicked
         // or when a source param is found and passed on page load
-        var clickfilterchoice = function(event,rel,href) {
+        var clickfilterchoice = function(event,rel,href,initor) {
             if ( event ) {
                 event.preventDefault();
                 var rel = $(this).attr("rel");
@@ -1034,7 +1038,7 @@ remain visible even if there is only one possible value.
             }
 
             var newobj = '<a class="facetview_filterselected facetview_clear btn btn-info';
-            if ( $('.facetview_or[href="' + rel + '"]', obj).attr('rel') == 'OR' ) {
+            if ( $('.facetview_or[href="' + rel + '"]', obj).attr('rel') == 'OR' || initor ) {
                 newobj += ' facetview_logic_or';
             }
             newobj += '" rel="' + rel +
@@ -1052,6 +1056,7 @@ remain visible even if there is only one possible value.
 
             $('.facetview_filterselected', obj).unbind('click',clearfilter);
             $('.facetview_filterselected', obj).bind('click',clearfilter);
+
             if ( event ) {
                 options.paging.from = 0;
                 dosearch();
@@ -1732,6 +1737,7 @@ remain visible even if there is only one possible value.
                         flts = qrystr.filtered.filter.bool.should;
                     }
                 }
+
                 for ( var qry = 0; qry < qrys.length; qry++ ) {
                     var curr_qry = qrys[qry];
                     var in_pre = false;
@@ -1747,13 +1753,14 @@ remain visible even if there is only one possible value.
                     for ( var key in curr_qry ) {
                         if ( key == 'term' ) {
                             for ( var t in curr_qry[key] ) {
-                                clickfilterchoice(false,t,curr_qry[key][t]);
+                                clickfilterchoice(false,t,curr_qry[key][t],false);
                             };
                         } else if ( key == 'bool' ) {
                         //TODO: handle sub-bools
                         };
                     };
                 };
+
                 for ( var flt = 0; flt < flts.length; flt++) {
                     var curr_flt = flts[flt];
                     var in_pre = false;
@@ -1766,17 +1773,17 @@ remain visible even if there is only one possible value.
                     if ( in_pre )
                         continue;
 
-
                     if(or) {
                         for ( var key in curr_flt ) {
                             if ( key == 'term' ) {
                                 for ( var t in curr_flt[key] ) {
-                                    clickfilterchoice(false,t,curr_flt[key][t]);
+                                    clickfilterchoice(false,t,curr_flt[key][t],true);
                                 }
                             }
                         }
+
                     } else {
-                        clickfilterchoice(false, curr_flt, 'undefined');
+                        clickfilterchoice(false, curr_flt, 'undefined',false);
                     }
                 };
             } else {
@@ -1803,7 +1810,7 @@ remain visible even if there is only one possible value.
                         for ( var key in curr_qry ) {
                             if ( key == 'term' ) {
                                 for ( var t in curr_qry[key] ) {
-                                    clickfilterchoice(false,t,curr_qry[key][t]);
+                                    clickfilterchoice(false,t,curr_qry[key][t],false);
                                 };
                             } else if ( key == 'query_string' ) {
                                 typeof(curr_qry[key]['query']) == 'string' ? options.q = curr_qry[key]['query'] : "";
@@ -1937,7 +1944,7 @@ remain visible even if there is only one possible value.
             ' href="#"><b>?</b></a> <a class="btn btn-small facetview_howmany"',
             ' title="change result set size" href="#">{{HOW_MANY}}</a>'
         ].join('');
-        if ( options.search_sortby.length > 0 ) {
+        if ( options.search_sortby.length >= 0 ) {
             thefacetview = [
                 thefacetview,
                 '<a class="btn btn-small facetview_order" title="current order',
@@ -2028,7 +2035,7 @@ remain visible even if there is only one possible value.
             var whenready = function() {
                 // append the facetview object to this object
                 thefacetview = thefacetview.replace(/{{HOW_MANY}}/gi,options.paging.size);
-		thefacetview = thefacetview.replace(/{{REFRESH}}/gi, hash);
+                thefacetview = thefacetview.replace(/{{REFRESH}}/gi, hash);
                 obj.append(thefacetview);
                 !options.embedded_search ? $('.facetview_search_options_container', obj).hide() : "";
 
