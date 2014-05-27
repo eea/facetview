@@ -1489,10 +1489,15 @@ remain visible even if there is only one possible value.
                 } else {
                     // TODO: check if this has class facetview_logic_or
                     // if so, need to build a should around it and its siblings
+
                     if ( $(this).hasClass('facetview_logic_or') ) {
-                        if ( !($(this).attr('rel') in seenor) ) {
-                            seenor.push($(this).attr('rel'));
-                            filter = {'bool':{'should':[]}};
+                        //check if seenor contains rel
+                        var rel = $(this).attr('rel');
+                        if( $.inArray(rel, seenor) == -1) {
+                        //if ( !($(this).attr('rel') in seenor) ) {
+                            seenor.push(rel);
+                            var myfilter = {'bool':{'should':[]}};
+
                             $('.facetview_filterselected[rel="' + $(this).attr('rel') + '"]').each(function() {
                                 if ( $(this).hasClass('facetview_logic_or') ) {
                                     var value = $(this).attr('href');
@@ -1503,11 +1508,21 @@ remain visible even if there is only one possible value.
                                         var ob = {'term':{}};
                                         ob['term'][ $(this).attr('rel') ] = value;
                                    }
-                                   filter.bool.should.push(ob);
+                                   myfilter.bool.should.push(ob);
                                 };
                             });
-                            if ( filter.bool.should.length == 0 ) {
-                                filter = false;
+                            if ( myfilter.bool.should.length == 0 ) {
+                                myfilter = false;
+                            } else {
+                                // A real filter is found
+                                if( !filter ) {
+                                    filter = myfilter;
+                                } else if (!filter.and ){
+                                    //two or filters on different relations
+                                    filter = {'and':[filter, myfilter]};
+                                } else {
+                                    filter.and.push(myfilter);
+                                }
                             }
                         }
                     } else {
@@ -1714,27 +1729,80 @@ remain visible even if there is only one possible value.
         var parsesource = function() {
             var qrystr = options.source.query;
             var pre_filters = options.predefined_filters;
+            function clickfacetvalues(aquery, or) {
+                if ( typeof aquery === 'string') {
+                    clickfilterchoice(false,aquery,'undefined',or);
+                    return;
+                };
+                if( aquery instanceof Array ) {
+                    for (var id in aquery ) {
+                       clickfilterchoice(false,aquery[id],'undefined',or);
+                    }
+                    return;
+                };
+                for ( var key in aquery ) {
+                    var curr_query = aquery[key];
+                    if ( key === 'term' ) {
+                        for ( var t in curr_query ) {
+                            clickfilterchoice(false,t,curr_query[t],or);
+                        }
+                    } else if (key === 'missing' ) {
+                        for (var t in curr_query['field']) {
+                            clickfilterchoice(false, curr_query['field'][t], 'undefined', or);
+                        }
+                    }
+                }
+            };
 
             if( 'filtered' in qrystr ) {
                 var qrys = [];
                 var flts = [];
                 var or = false;
-                if ( 'query' in qrystr.filtered
-                    && 'bool' in qrystr.filtered.query) {
-                    if( 'must' in  qrystr.filtered.query.bool ) {
-                        qrys = qrystr.filtered.query.bool.must;
-                    } else if ( 'should' in qrystr.filtered.query.bool ) {
-                        qrys =  qrystr.filtered.query.bool.should;
+                var qryflt = qrystr.filtered;
+                if ( 'query' in qryflt && 'bool' in qryflt.query) {
+                    var qrybool = qryflt.query.bool;
+                    if( 'must' in  qrybool ) {
+                        qrys = qrybool.must;
+                    } else if ( 'should' in qrybool ) {
+                        qrys =  qrybool.should;
                     }
                 }
-                if ( 'filter' in qrystr.filtered ) {
-                    if( 'missing' in qrystr.filtered.filter
-                        && 'field' in qrystr.filtered.filter.missing ) {
-                        flts = qrystr.filtered.filter.missing.field;
-                    } else if ( 'bool' in qrystr.filtered.filter
-                        && 'should' in qrystr.filtered.filter.bool) {
-                        or = true;
-                        flts = qrystr.filtered.filter.bool.should;
+                if ( 'filter' in qryflt ) {
+                    var qry_flt = qryflt.filter;
+                    if( 'missing' in qry_flt && 'field' in qry_flt.missing ) {
+                        flts = qry_flt.missing.field;
+                    } else if ( 'bool' in qry_flt
+                        && 'should' in qry_flt.bool) {
+                        var value = qry_flt.bool.should;
+                        if ( flts instanceof Array ) {
+                            ftls = [];
+                            var len = value.length;
+                            for (var idx = 0; idx < len; idx++) {
+                                var curr_flts = value[idx];
+                                if('missing' in curr_flts &&
+                                    'field' in curr_flts.missing) {
+                                    flts.push(curr_flts.missing.field);
+                                } else if ('term' in curr_flts) {
+                                    flts.push(curr_flts);
+                                    or = true;
+                                }
+                            }
+                            //flts = flts.missing.field;
+                        } else {
+                            or = true;
+                            flts = value;
+                        }
+                    } else if ( 'and' in qry_flt ) {
+                        var andfilter = qry_flt.and;
+                        var len = andfilter.length;
+                        for (var p = 0; p < len; p++) {
+                            or = true;
+                            var currflt = andfilter[p];
+                            if( 'bool' in currflt &&
+                                'should' in currflt.bool) {
+                                flts.push(currflt.bool.should);
+                            }
+                        }
                     }
                 }
 
@@ -1752,8 +1820,9 @@ remain visible even if there is only one possible value.
 
                     for ( var key in curr_qry ) {
                         if ( key == 'term' ) {
-                            for ( var t in curr_qry[key] ) {
-                                clickfilterchoice(false,t,curr_qry[key][t],false);
+                            var curr_qry_key = curr_qry[key];
+                            for ( var t in curr_qry_key ) {
+                                clickfilterchoice(false,t,curr_qry_key[t],false);
                             };
                         } else if ( key == 'bool' ) {
                         //TODO: handle sub-bools
@@ -1774,16 +1843,25 @@ remain visible even if there is only one possible value.
                         continue;
 
                     if(or) {
-                        for ( var key in curr_flt ) {
-                            if ( key == 'term' ) {
-                                for ( var t in curr_flt[key] ) {
-                                    clickfilterchoice(false,t,curr_flt[key][t],true);
-                                }
+                        if( curr_flt instanceof Array) {
+                            for( var id = 0; id < curr_flt.length; id++) {
+                                clickfacetvalues(curr_flt[id],or);
                             }
+                        } else if (typeof curr_flt === 'string') {
+                            clickfilterchoice(false, curr_flt, 'undefined',true);
+                        } else {
+                            clickfacetvalues(curr_flt, or);
                         }
-
                     } else {
-                        clickfilterchoice(false, curr_flt, 'undefined',false);
+                        if (curr_flt instanceof Array) {
+                            for( var id = 0; id < curr_flt.length; id++) {
+                                clickfacetvalues(curr_flt[id], or);
+                            }
+                        } else if (typeof curr_flt === 'string') {
+                            clickfilterchoice(false, curr_flt, 'undefined',false);
+                        } else {
+                            //TODO: Decide what to do for unknown options
+                        }
                     }
                 };
             } else {
