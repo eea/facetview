@@ -537,13 +537,13 @@ remain visible even if there is only one possible value.
         //recursive function that returns the json in a hierarchy
         var getJson = function(value, property) {
             var jsonval = [];
-            if (typeof value === 'string') {
+            if (typeof value === 'string' ) {
                 jsonval.push(
                     {
                         'text': value + ' (0)',
                         'li_attr' : {
                             'rel' : property,
-                            'class' : 'facetview_leaf_filterchoice',
+                            'class' : 'facetview_filterchoice leaf',
                             'title' : value
                         }
                     }
@@ -557,20 +557,25 @@ remain visible even if there is only one possible value.
                 return jsonval;
             }
             for (var element in value) {
-                jsonval.push({
-                    'text':element + ' (0)',
-                    'state' : {
-                        'opened' : true,
-                        'selected' : false
-                    },
-                    'li_attr' : {
-                        'rel' : property,
-                        'class' : 'facetview_filterchoice',
-                        'title' : element
-                    },
-                    'children': getJson(value[element], property),
+                var children = value[element];
+                if(children.length > 0) {
+                    jsonval.push({
+                        'text':element + ' (0)',
+                        'state' : {
+                            'opened' : true,
+                            'selected' : false
+                        },
+                        'li_attr' : {
+                            'rel' : property,
+                            'class' : 'facetview_filterchoice',
+                            'title' : element
+                        },
+                        'children': getJson(children, property),
+                    });
+                } else {
+                    jsonval = jsonval.concat(getJson(element, property));
+                }
 
-                });
             }
             return jsonval;
         };
