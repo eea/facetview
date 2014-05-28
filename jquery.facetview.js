@@ -1309,7 +1309,7 @@ remain visible even if there is only one possible value.
                         var result = 0;
                         var leafChildren = value.find('.jstree-leaf');
                         for (var idx = 0; idx < leafChildren.length; idx++) {
-                                var val = leafChildren[idx].innerText;
+                                var val = leafChildren[idx].textContent;
                                 var start = val.indexOf('(');
                                 var stop = val.indexOf(')');
                                 val = parseInt(val.substring(start + 1, stop)) || 0;
