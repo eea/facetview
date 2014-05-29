@@ -967,6 +967,14 @@ remain visible even if there is only one possible value.
                         rel = 'OR';
                         style = '';
                     }
+                    var ordText = 'a-z';
+                    var dir = 'down';
+                    if ( ord.indexOf('count') > -1 ) {
+                        ordText = 'count';
+                    }
+                    if ( ord.indexOf('r') == 0 ) {
+                        dir = 'up';
+                    }
                     html = [html,
                         '<div class="facetview_filter"> <a class="',
                         'facetview_showtree" title="',
@@ -983,10 +991,11 @@ remain visible even if there is only one possible value.
                         '" title="filter value order" href="',
                         prop,
                         '">',
-                        'a-z <i class="icon-arrow-down"></i>',
-                        '</a> <a class="btn btn-small facetview_or" ',
-                        'title="select another option from this filter" ',
-                        'rel="',
+                        ordText,
+                        '<i class="icon-arrow-',
+                        dir,
+                        '"></i> </a> <a class="btn btn-small facetview_or" ',
+                        'title="select another option from this filter" rel="',
                         rel,
                         '" href="',
                         prop,
