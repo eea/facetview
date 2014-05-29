@@ -583,44 +583,21 @@ remain visible even if there is only one possible value.
         // function to switch filters to OR instead of AND
         var orfilters = function(event) {
             event.preventDefault();
-            if ( $(this).attr('rel') == 'AND' ) {
-                $(this).attr('rel','OR');
-                $(this).css({'color':'#333'});
-                $('.facetview_filterselected[rel="' + $(this).attr('href') + '"]', obj).addClass('facetview_logic_or');
+            var that = $(this);
+            if ( that.attr('rel') == 'AND' ) {
+                that.attr('rel','OR');
+                that.text('OR');
+                that.css({'color':'#333'});
+                $('.facetview_filterselected[rel="' + that.attr('href') + '"]', obj).addClass('facetview_logic_or');
             } else {
-                $(this).attr('rel','AND');
-                $(this).css({'color':'#aaa'});
-                $('.facetview_filterselected[rel="' + $(this).attr('href') + '"]', obj).removeClass('facetview_logic_or');
+                that.attr('rel','AND');
+                that.text('AND');
+                that.css({'color':'#aaa'});
+                $('.facetview_filterselected[rel="' + that.attr('href') + '"]', obj).removeClass('facetview_logic_or');
             }
             dosearch();
 
         }
-
-        // function that compares two strings
-        var sortstrasc = function(a,b) {
-                var len = a.indexOf('(') || a.length;
-                a = a.substring(0, len);
-                len = b.indexOf('(') || b.length;
-                b = b.substring(0, len);
-
-                if(a < b) {
-                    return  -1;
-                }
-                return 1;
-        };
-
-        // function that compares the number of results from the "(<NUMBER>)"
-        // part of the value
-        var sortnumdesc = function(a,b) {
-            var start = a.indexOf('(') || a.length;
-            var stop = a.indexOf(')') || a.length;
-            a = parseInt(a.substring(start + 1, stop));
-            start = b.indexOf('(') || b.length;
-            stop = b.indexOf(')') || b.length;
-            b = parseInt(b.substring(start + 1, stop));
-            return b-a;
-
-        };
 
         function createtreefromdata(tree, ord, values) {
 
@@ -1000,7 +977,9 @@ remain visible even if there is only one possible value.
                         prop,
                         '" style="',
                         style,
-                        '">OR</a> </div>',
+                        '">',
+                        rel,
+                        '</a> </div>',
                         '<div class="facetview_tree" style="display:none" rel="',
                         prop,
                         '"></div></div>'
