@@ -950,6 +950,12 @@ remain visible even if there is only one possible value.
                 //with the results
                 var trees = $('#facetview_trees');
                 var html = '';
+
+                var orderConstants = {
+                    'term': {'text' : 'a-z', 'direction' : 'down'},
+                    'rterm' : {'text' : 'a-z', 'direction' : 'up'},
+                    'count' : {'text' : 'count', 'direction' : 'down'},
+                    'rcount' : {'text' : 'count', 'direction' : 'up'}};
                 for (var prop in options.hierarchy) {
                     var valuetext = '';
                     var ord = '';
@@ -967,14 +973,7 @@ remain visible even if there is only one possible value.
                         rel = 'OR';
                         style = '';
                     }
-                    var ordText = 'a-z';
-                    var dir = 'down';
-                    if ( ord.indexOf('count') > -1 ) {
-                        ordText = 'count';
-                    }
-                    if ( ord.indexOf('r') == 0 ) {
-                        dir = 'up';
-                    }
+                    var myOrder = orderConstants[ord];
                     html = [html,
                         '<div class="facetview_filter"> <a class="',
                         'facetview_showtree" title="',
@@ -991,9 +990,9 @@ remain visible even if there is only one possible value.
                         '" title="filter value order" href="',
                         prop,
                         '">',
-                        ordText,
+                        myOrder['text'],
                         '<i class="icon-arrow-',
-                        dir,
+                        myOrder['direction'],
                         '"></i> </a> <a class="btn btn-small facetview_or" ',
                         'title="select another option from this filter" rel="',
                         rel,
@@ -1279,8 +1278,8 @@ remain visible even if there is only one possible value.
 
                 //These functions slow down the results
                 //set the values for the jstree from the results
-                if(options.hierarchy) {
-                    var tree = $('.facetview_tree[rel="' + facet + '"]');
+                var tree = $('.facetview_tree[rel="' + facet + '"]');
+                if(options.hierarchy && options.hierarchy[facet].length > 0) {
                     tree.jstree('open_all');
                     tree.find('.jstree-leaf').show();
                     //first set all values with count 0
@@ -1345,6 +1344,29 @@ remain visible even if there is only one possible value.
 
                     tree.jstree('close_all');
 
+                } else {
+                    //function that converts the results to a json for the jstree
+                    var resultsToJson = function(results, property) {
+                        var jsonval = [];
+                        for (var element in results) {
+                            jsonval.push(
+                                {
+                                    'text' : element + ' (' + results[element] + ')',
+                                    'li_attr' : {
+                                        'rel' : property,
+                                        'class' : 'facetview_filterchoice leaf',
+                                        'title' : element
+                                    }
+                                })
+                        }
+                        return jsonval;
+                    };
+
+                    tree.jstree('destroy');
+                    createtreefromdata(
+                        tree,
+                        current_filter['order'],
+                        resultsToJson(records, facet));
                 }
 
                 //hide hierarchic parents with no results
