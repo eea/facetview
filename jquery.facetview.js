@@ -1297,7 +1297,7 @@ remain visible even if there is only one possible value.
                         if(inTree.length > 0) {
                             tree.jstree(true).rename_node(inTree, item + ' (' + record + ')');
                         } else {
-                            var newNode = {
+                           /* var newNode = {
                                 state : 'open',
                                 text : item + ' (' + record + ')',
                                 li_attr : {
@@ -1306,7 +1306,9 @@ remain visible even if there is only one possible value.
                                     'title' : item
                                 }
                             };
-                            var leafID = tree.jstree('create_node', '#', newNode, 'last');
+                            var leafID = tree.jstree('create_node', '#', newNode, 'last');*/
+                            //Nothing should be done in case the value is not in the hierarchy since
+                            //because the hierarchy implies controlled vocabulary
                         }
                     }
                     //set the values for the parents
@@ -1361,12 +1363,50 @@ remain visible even if there is only one possible value.
                         }
                         return jsonval;
                     };
+                    var updateJson  = function(results, property, json) {
+                        for (var element in json) {
+                            var value = json[element];
+                            var text = value.li_attr.title;
+                            var result_val = results[text];
+                            if ( result_val === undefined ) {
+                                value.text = text + ' (0)';
+                            } else {
+                                value.text = text + ' (' + result_val + ')';
+                            }
+                        }
+                        return json;
+                    };
 
+                    var oldJson = tree.jstree(true).get_json('#');
                     tree.jstree('destroy');
-                    createtreefromdata(
+                    if( oldJson.length == 0) {
+                        createtreefromdata(
                         tree,
                         current_filter['order'],
                         resultsToJson(records, facet));
+                    } else {
+                        createtreefromdata(
+                        tree,
+                        current_filter['order'],
+                        updateJson(records, facet, oldJson));
+
+                        var or_button = tree
+                        .siblings('.facetview_filter_options')
+                            .find('.facetview_or');
+                        var or_buttton_rel = or_button.attr('rel');
+
+                        var children = tree.find('.jstree-leaf');
+                        children.show();
+                        if( or_buttton_rel === 'AND' ) {
+                            for ( var id = 0; id < children.length; id++ ) {
+                                var child = children[id];
+                                if ( child.textContent.indexOf('(0)') > -1 ) {
+                                    $(child).hide();
+                                }
+                            }
+                        }
+                    }
+
                 }
 
                 //hide hierarchic parents with no results
