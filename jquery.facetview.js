@@ -584,14 +584,17 @@ remain visible even if there is only one possible value.
         var orfilters = function(event) {
             event.preventDefault();
             var that = $(this);
+            var id = 'facetview_group_' + that.attr('href').replace(/\./gi,'_').replace(/\:/gi,'_');
             if ( that.attr('rel') == 'AND' ) {
                 that.attr('rel','OR');
                 that.text('OR');
                 that.css({'color':'#333'});
+                toc = $('[id="' + id + '"]').children('.rel-between').text('OR');
                 $('.facetview_filterselected[rel="' + that.attr('href') + '"]', obj).addClass('facetview_logic_or');
             } else {
                 that.attr('rel','AND');
                 that.text('AND');
+                $('[id="' + id + '"]').children('.rel-between').text('AND');
                 that.css({'color':'#aaa'});
                 $('.facetview_filterselected[rel="' + that.attr('href') + '"]', obj).removeClass('facetview_logic_or');
             }
@@ -1030,16 +1033,27 @@ remain visible even if there is only one possible value.
             }
 
             var newobj = '<a class="facetview_filterselected facetview_clear btn btn-info';
-            if ( $('.facetview_or[href="' + rel + '"]', obj).attr('rel') == 'OR' || initor ) {
+            var operation = $('.facetview_or[href="' + rel + '"]', obj);
+            var op_text = 'AND';
+            if ( operation.attr('rel') == 'OR' || initor ) {
                 newobj += ' facetview_logic_or';
+                op_text = 'OR';
             }
-            newobj += '" rel="' + rel +
-                '" alt="remove" title="remove"' +
-                ' href="' + href + '">' +
-                href + ' <i class="icon-white icon-remove" style="margin-top:1px;"></i></a>';
+            newobj = [ newobj,
+                       '" rel="',
+                       rel,
+                       '" alt="remove" title="remove"',
+                       ' href="' + href + '">',
+                       href,
+                       ' <i class="icon-white icon-remove" ',
+                       'style="margin-top:1px;"></i></a>']
+                       .join('');
 
             if ( $('div[id="facetview_group_' + relclean + '"]', obj).length ) {
+                newobj = '<a class="btn btn-small rel-between" rel="' + href +
+                    '"">' + op_text + '</a>' + newobj;
                 $('div[id="facetview_group_' + relclean + '"]', obj).append(newobj);
+
             } else {
                 var pobj = '<div id="facetview_group_' + relclean + '" class="btn-group">';
                 pobj += newobj + '</div>';
@@ -1058,10 +1072,13 @@ remain visible even if there is only one possible value.
         // clear a filter when clear button is pressed, and re-do the search
         var clearfilter = function(event) {
             event.preventDefault();
-            if ( $(this).siblings().length == 0 ) {
-                $(this).parent().remove();
+            var that = $(this);
+            if ( that.siblings().length == 0 ) {
+                that.parent().remove();
             } else {
-                $(this).remove();
+                var button = that.siblings('[rel="' + that.attr('href') + '"]');
+                button.remove();
+                that.remove();
             }
             options.paging.from = 0;
             dosearch();
