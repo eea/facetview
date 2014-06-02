@@ -955,8 +955,8 @@ remain visible even if there is only one possible value.
                     }
                     var myOrder = orderConstants[ord];
                     html = [html,
-                        '<div class="facetview_filter"> <a class="',
-                        'facetview_showtree" title="',
+                        '<div class="facetview_filter" style="margin-top:10px">',
+                        ' <a class="facetview_showtree" title="',
                         prop,
                         '" id="',
                         prop,
@@ -983,7 +983,8 @@ remain visible even if there is only one possible value.
                         '">',
                         rel,
                         '</a> </div>',
-                        '<div class="facetview_tree" style="display:none;" rel="',
+                        '<div class="facetview_tree" style="display:none; ',
+                        'border-style:solid; border-color:#f0f0f0;" rel="',
                         prop,
                         '"></div></div>'
                         ].join('');
@@ -1515,7 +1516,7 @@ remain visible even if there is only one possible value.
 
             for (var id = 0; id < treeNum; id++) {
                 var tree = $(trees[id]);
-                var localNum = treeHeight / (treeNum + 0.5);
+                var localNum = treeHeight / treeNum;
                 var innerNum = tree.children('.jstree-container-ul').height();
                 if(tree.is(':visible') && innerNum < localNum) {
                     tree.height(innerNum + 'px');
