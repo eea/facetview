@@ -983,7 +983,7 @@ remain visible even if there is only one possible value.
                         '">',
                         rel,
                         '</a> </div>',
-                        '<div class="facetview_tree" style="display:none" rel="',
+                        '<div class="facetview_tree" style="display:none;" rel="',
                         prop,
                         '"></div></div>'
                         ].join('');
@@ -1051,7 +1051,7 @@ remain visible even if there is only one possible value.
 
             if ( $('div[id="facetview_group_' + relclean + '"]', obj).length ) {
                 newobj = '<a class="btn btn-small rel-between" rel="' + href +
-                    '"">' + op_text + '</a>' + newobj;
+                    '"" style="color:#aaa">' + op_text + '</a>' + newobj;
                 $('div[id="facetview_group_' + relclean + '"]', obj).append(newobj);
 
             } else {
@@ -1073,11 +1073,15 @@ remain visible even if there is only one possible value.
         var clearfilter = function(event) {
             event.preventDefault();
             var that = $(this);
-            if ( that.siblings().length == 0 ) {
+            if ( that.siblings().length <= 1 ) {
                 that.parent().remove();
             } else {
                 var button = that.siblings('[rel="' + that.attr('href') + '"]');
-                button.remove();
+                if(button.length == 0) {
+                    $(that.siblings('.rel-between')[0]).remove();
+                } else {
+                    button.remove();
+                }
                 that.remove();
             }
             options.paging.from = 0;
@@ -1428,7 +1432,6 @@ remain visible even if there is only one possible value.
                         }
 
                     }
-
                 }
             }
 
@@ -1503,6 +1506,22 @@ remain visible even if there is only one possible value.
             // if a post search callback is provided, run it
             if (typeof options.post_search_callback == 'function') {
                 options.post_search_callback.call(this);
+            }
+
+            //set tree height
+            var treeHeight = $('#facetview_rightcol').height() * 0.8;
+            var trees = $('div.facetview_tree');
+            var treeNum = trees.length;
+
+            for (var id = 0; id < treeNum; id++) {
+                var tree = $(trees[id]);
+                var localNum = treeHeight / (treeNum + 0.5);
+                var innerNum = tree.children('.jstree-container-ul').height();
+                if(tree.is(':visible') && innerNum < localNum) {
+                    tree.height(innerNum + 'px');
+                } else {
+                    tree.height(localNum + 'px');
+                }
             }
         };
 

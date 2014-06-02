@@ -37,8 +37,8 @@
     border-radius: 5px;
 }
 .facetview_rangecontainer{
-    border:1px solid #ccc; 
-    padding:5px; 
+    border:1px solid #ccc;
+    padding:5px;
     margin-bottom:5px;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
@@ -73,5 +73,11 @@
     font-weight:bold;
     text-decoration:none;
     margin:0 5px 0 5px;
+}
+
+.facetview_tree {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    width: 112%;
 }
 
