@@ -82,3 +82,7 @@
     resize: vertical;
 }
 
+.jstree-default a.jstree-anchor {
+    white-space:normal;
+    height: auto;
+}
