@@ -610,7 +610,11 @@ remain visible even if there is only one possible value.
                     'animation': 0,
                     'data' : values,
                     'check_callback' : true,
-                    'themes' : { 'icons' : false, 'dots': false }
+                    'themes' : {
+                        'name' : 'default',
+                        'icons' : false,
+                        'dots': true
+                    }
                 },
                 'sort' :  function (a, b) {
                     var a_text = this.get_node(a).text;
