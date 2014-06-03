@@ -610,7 +610,7 @@ remain visible even if there is only one possible value.
                     'animation': 0,
                     'data' : values,
                     'check_callback' : true,
-                    'themes' : { 'icons' : false }
+                    'themes' : { 'icons' : false, 'dots': false }
                 },
                 'sort' :  function (a, b) {
                     var a_text = this.get_node(a).text;
@@ -725,23 +725,6 @@ remain visible even if there is only one possible value.
 
         };
 
-        // adjust how many results are shown
-        var morefacetvals = function(event) {
-            event.preventDefault();
-            var morewhat = options.facets[ $(this).attr('rel') ];
-            if ('size' in morewhat ) {
-                var currentval = morewhat['size'];
-            } else {
-                var currentval = 10;
-            }
-            var newmore = prompt('Currently showing ' + currentval + '. How many would you like instead?');
-            if (newmore) {
-                options.facets[ $(this).attr('rel') ]['size'] = parseInt(newmore);
-                $(this).html(newmore);
-                dosearch();
-            }
-        };
-
         // insert a facet range once selected
         // TODO: UPDATE
         var dofacetrange = function(rel) {
@@ -849,77 +832,6 @@ remain visible even if there is only one possible value.
             ).html( values[ values.length-1] );
         };
 
-        //build the entire hierarchy of values
-        var buildHierarchy = function(predicate) {
-            return buildStructure(predicate, 0, options.hierarchy[predicate]);
-        };
-
-        //given a predicate and a dictionary, creates the tree-like hierarchy
-        var buildStructure = function (predicate, level, dict) {
-            var result = "";
-            if (typeof dict === "string") {
-                result = [
-                        '<tr class="facetview_filtervalue_hierarchic',
-                        '" title="filter" ',
-                        'style="display:none"><td><a class="facetview_filterchoice" rel="',
-                        predicate,
-                        '" href="',
-                        dict,
-                        '"> ',
-                        dict,
-                        ' (0)</a></td></tr>'
-                    ].join("");
-                return result;
-            }
-
-            if (dict instanceof Array) {
-                for (var element in dict) {
-                    result = [
-                        result,
-                        buildStructure(predicate, level + 1, dict[element]),
-                    ].join("");
-                }
-            } else {
-                for (var element in dict) {
-                    var children = buildStructure(predicate, level + 1, dict[element]);
-                    result = [
-                        result,
-                        '<tr class ="facetview_filterdiv_hierarchic',
-                        '" style="display:none"><td><a class="facetview_filterparent" rel="',
-                        element,
-                        '" style="" href="',
-                        predicate,
-                        '"><i ',
-                        'class="icon-plus"></i> ',
-                        element,
-                        ' (0)',
-                        '</a> <table class="results" style="display:none"> ',
-                        children,
-                        '</table></td></tr>'
-                    ].join("");
-                }
-            }
-            return result;
-        };
-
-        var showchildren = function(event) {
-            event.preventDefault();
-            if ( $(this).hasClass('facetview_open') ) {
-                $(this).children('i').removeClass('icon-minus');
-                $(this).children('i').addClass('icon-plus');
-                $(this).removeClass('facetview_open');
-                $(this).siblings('.facetview_filteroptions').hide();
-                $(this).siblings('.results').hide();
-            } else {
-                $(this).children('i').removeClass('icon-plus');
-                $(this).children('i').addClass('icon-minus');
-                $(this).addClass('facetview_open');
-                $(this).siblings('.results').show();
-                $(this).siblings('.results').children().children().show();
-                $(this).siblings('.facetview_filteroptions').show();
-            }
-        };
-
         // pass a list of filters to be displayed
         var buildfilters = function() {
             if (options.facets.length > 0) {
@@ -984,7 +896,7 @@ remain visible even if there is only one possible value.
                         rel,
                         '</a> </div>',
                         '<div class="facetview_tree" style="display:none; ',
-                        'border-style:solid; border-color:#f0f0f0;" rel="',
+                        'border:solid #f0f0f0 1px;" rel="',
                         prop,
                         '"></div></div>'
                         ].join('');
