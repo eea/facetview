@@ -852,6 +852,7 @@ remain visible even if there is only one possible value.
                     'rterm' : {'text' : 'a-z', 'direction' : 'up'},
                     'count' : {'text' : 'count', 'direction' : 'down'},
                     'rcount' : {'text' : 'count', 'direction' : 'up'}};
+
                 for (var prop in options.hierarchy) {
                     var valuetext = '';
                     var ord = '';
@@ -863,11 +864,15 @@ remain visible even if there is only one possible value.
                             break;
                         }
                     }
-                    var rel = 'AND';
+                    var rel = facet.operator;
+                    if ( rel = undefined ) {
+                        rel = 'AND';
+                    }
                     var style = 'color:#aaa;'
                     if ( $('.facetview_logic_or[rel="' + prop + '"]').length ) {
                         rel = 'OR';
-                        style = '';
+                    } else if ( $('.facetview_filterselected[rel="' + prop + '"]').length ) {
+                        rel = 'AND';
                     }
                     var myOrder = orderConstants[ord];
                     html = [html,
@@ -894,9 +899,7 @@ remain visible even if there is only one possible value.
                         rel,
                         '" href="',
                         prop,
-                        '" style="',
-                        style,
-                        '">',
+                        '" >',
                         rel,
                         '</a> </div>',
                         '<div class="facetview_tree" style="display:none; ',
