@@ -535,12 +535,16 @@ remain visible even if there is only one possible value.
         };
 
         //recursive function that returns the json in a hierarchy
-        var getJson = function(value, property) {
+        var getJson = function(value, property, rel) {
+            var count = '';
+            if (rel === 'AND' ) {
+                count = ' (0)';
+            }
             var jsonval = [];
             if (typeof value === 'string' ) {
                 jsonval.push(
                     {
-                        'text': value + ' (0)',
+                        'text': value + count,
                         'li_attr' : {
                             'rel' : property,
                             'class' : 'facetview_filterchoice leaf',
@@ -560,7 +564,7 @@ remain visible even if there is only one possible value.
                 var children = value[element];
                 if(children.length > 0) {
                     jsonval.push({
-                        'text':element + ' (0)',
+                        'text':element + count,
                         'state' : {
                             'opened' : true,
                             'selected' : false
@@ -860,6 +864,7 @@ remain visible even if there is only one possible value.
                     var rel = facet.operator;
                     if ( rel == undefined ) {
                         rel = 'AND';
+                        facet.operator = 'AND';
                     }
                     var style = 'color:#aaa;'
                     if ( $('.facetview_logic_or[rel="' + prop + '"]').length ) {
@@ -907,7 +912,7 @@ remain visible even if there is only one possible value.
                 for (var prop in options.hierarchy) {
                     var tree = $('.facetview_tree[rel="'+ prop + '"]');
                     var children = options.hierarchy[prop];
-                    var tree_json = getJson(children, prop);
+                    var rel = facet.operator;
                     var which = 0;
                     for ( var i = 0; i < options.facets.length; i++ ) {
                         var item = options.facets[i];
@@ -918,7 +923,9 @@ remain visible even if there is only one possible value.
                         }
                     }
 
-                    createtreefromdata(tree, options.facets[which].order, getJson(children, prop));
+                    createtreefromdata( tree,
+                                        options.facets[which].order,
+                                        getJson(children, prop, rel));
 
                 }
 
@@ -1189,64 +1196,55 @@ remain visible even if there is only one possible value.
                 var facetclean = current_filter['field'].replace(/\./gi,'_').replace(/\:/gi,'_');
                 var records = data["facets"][ facet ];
 
-                //These functions slow down the results
-                //set the values for the jstree from the results
                 var tree = $('.facetview_tree[rel="' + facet + '"]');
+                var or_button = tree
+                        .siblings('.facetview_filter_options')
+                            .find('.facetview_or');
+                var or_buttton_rel = or_button.attr('rel');
+
                 if(options.hierarchy && options.hierarchy[facet].length > 0) {
                     tree.jstree('open_all');
                     tree.find('.jstree-leaf').show();
+
                     //first set all values with count 0
                     var leaves = $('.jstree-leaf');
                     var len = leaves.length;
                     for (var id = 0; id < len; id++) {
                         var leaf = leaves[id];
-                        tree.jstree(true).rename_node($(leaf), leaf.title + ' (0)');
-                    }
-                    //set the values for the leaves
-                    for(var item in records) {
-                        var record = records[item];
-                        var inTree = $('.jstree-leaf[title="' + item + '"]');
-
-                        if(inTree.length > 0) {
-                            tree.jstree(true).rename_node(inTree, item + ' (' + record + ')');
+                        if ( or_buttton_rel === 'AND') {
+                            tree.jstree(true).rename_node($(leaf), leaf.title + ' (0)');
                         } else {
-                           /* var newNode = {
-                                state : 'open',
-                                text : item + ' (' + record + ')',
-                                li_attr : {
-                                    'rel' : facet,
-                                    'class' : 'facetview_filterchoice leaf',
-                                    'title' : item
-                                }
-                            };
-                            var leafID = tree.jstree('create_node', '#', newNode, 'last');*/
-                            //Nothing should be done in case the value is not in the hierarchy since
-                            //because the hierarchy implies controlled vocabulary
+                            tree.jstree(true).rename_node($(leaf), leaf.title);
                         }
                     }
-                    //set the values for the parents
-                    var values = $('.facetview_filterchoice[rel="' + facet + '"]:not(.jstree-leaf)');
-
-                    for (var id = 0; id < values.length; id++ ) {
-                        var value = $(values[id]);
-                        var result = 0;
-                        var leafChildren = value.find('.jstree-leaf');
-                        for (var idx = 0; idx < leafChildren.length; idx++) {
-                                var val = leafChildren[idx].textContent;
-                                var start = val.indexOf('(');
-                                var stop = val.indexOf(')');
-                                val = parseInt(val.substring(start + 1, stop)) || 0;
-                                result += val;
-                        }
-                        if(result >= 0)
-                            tree.jstree(true).rename_node(value, value.attr('title') + ' (' + result + ')');
-                    }
-                    //hide the ones with no values
-                    var or_button = tree
-                        .siblings('.facetview_filter_options')
-                            .find('.facetview_or');
-                    var or_buttton_rel = or_button.attr('rel');
                     if ( or_buttton_rel === 'AND') {
+                        //set the values for the leaves
+                        for(var item in records) {
+                            var record = records[item];
+                            var inTree = $('.jstree-leaf[title="' + item + '"]');
+
+                            if(inTree.length > 0) {
+                                tree.jstree(true).rename_node(inTree, item + ' (' + record + ')');
+                            }
+                        }
+                        //set the values for the parents
+                        var values = $('.facetview_filterchoice[rel="' + facet + '"]:not(.jstree-leaf)');
+
+                        for (var id = 0; id < values.length; id++ ) {
+                            var value = $(values[id]);
+                            var result = 0;
+                            var leafChildren = value.find('.jstree-leaf');
+                            for (var idx = 0; idx < leafChildren.length; idx++) {
+                                    var val = leafChildren[idx].textContent;
+                                    var start = val.indexOf('(');
+                                    var stop = val.indexOf(')');
+                                    val = parseInt(val.substring(start + 1, stop)) || 0;
+                                    result += val;
+                            }
+                            if(result >= 0)
+                                tree.jstree(true).rename_node(value, value.attr('title') + ' (' + result + ')');
+                        }
+                        //hide the ones with no values
                         values = $('.jstree-node[rel="' + facet + '"]');
                         for (var id = 0; id < values.length; id++) {
                             var value = values[id];
@@ -1261,31 +1259,50 @@ remain visible even if there is only one possible value.
 
                 } else {
                     //function that converts the results to a json for the jstree
-                    var resultsToJson = function(results, property) {
+                    var resultsToJson = function(results, property, rel) {
                         var jsonval = [];
-                        for (var element in results) {
-                            jsonval.push(
-                                {
-                                    'text' : element + ' (' + results[element] + ')',
-                                    'li_attr' : {
-                                        'rel' : property,
-                                        'class' : 'facetview_filterchoice leaf',
-                                        'title' : element
-                                    }
-                                })
+                        if( rel === 'AND' ) {
+                            for (var element in results) {
+                                jsonval.push(
+                                    {
+                                        'text' : element + ' (' + results[element] + ')',
+                                        'li_attr' : {
+                                            'rel' : property,
+                                            'class' : 'facetview_filterchoice leaf',
+                                            'title' : element
+                                        }
+                                    })
+                            }
+                        } else {
+                            for (var element in results) {
+                                jsonval.push(
+                                    {
+                                        'text' : element,
+                                        'li_attr' : {
+                                            'rel' : property,
+                                            'class' : 'facetview_filterchoice leaf',
+                                            'title' : element
+                                        }
+                                    })
+                            }
                         }
                         return jsonval;
                     };
-                    var updateJson  = function(results, property, json) {
+                    var updateJson  = function(results, property, json, rel) {
                         for (var element in json) {
                             var value = json[element];
                             var text = value.li_attr.title;
                             var result_val = results[text];
-                            if ( result_val === undefined ) {
-                                value.text = text + ' (0)';
+                            if ( rel === 'AND' ) {
+                                if ( result_val === undefined ) {
+                                    value.text = text + ' (0)';
+                                } else {
+                                    value.text = text + ' (' + result_val + ')';
+                                }
                             } else {
-                                value.text = text + ' (' + result_val + ')';
+                                value.text = text;
                             }
+
                         }
                         return json;
                     };
@@ -1296,17 +1313,12 @@ remain visible even if there is only one possible value.
                         createtreefromdata(
                         tree,
                         current_filter['order'],
-                        resultsToJson(records, facet));
+                        resultsToJson(records, facet, or_buttton_rel));
                     } else {
                         createtreefromdata(
                         tree,
                         current_filter['order'],
-                        updateJson(records, facet, oldJson));
-
-                        var or_button = tree
-                        .siblings('.facetview_filter_options')
-                            .find('.facetview_or');
-                        var or_buttton_rel = or_button.attr('rel');
+                        updateJson(records, facet, oldJson, or_buttton_rel));
 
                         var children = tree.find('.jstree-leaf');
                         children.show();
