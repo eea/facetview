@@ -662,6 +662,7 @@ remain visible even if there is only one possible value.
                         clickfilterchoice(false, child.attr('rel'), child.attr('title'),false);
                     }
                     dosearch();
+
                 }
             })
             .on('open_node.jstree', function (event, data) {
@@ -975,8 +976,17 @@ remain visible even if there is only one possible value.
                 $('div[id="facetview_group_' + relclean + '"]', obj).append(newobj);
 
             } else {
-                var pobj = '<div id="facetview_group_' + relclean + '" class="btn-group">';
-                pobj += newobj + '</div>';
+                var pobj = [pobj,
+                            '<div id="facetview_group_',
+                            relclean,
+                            '" class="btn-group facetview_selected">',
+                            newobj,
+                            '</div>'
+                            ].join('');
+                if( $('div.facetview_selected').length ) {
+                    pobj = '<div class="facet-rel-between"><a class="btn btn-small facet_operator"> AND</div>' + pobj;
+                }
+
                 $('#facetview_selectedfilters', obj).append(pobj);
             };
 
@@ -994,7 +1004,13 @@ remain visible even if there is only one possible value.
             event.preventDefault();
             var that = $(this);
             if ( that.siblings().length <= 1 ) {
-                that.parent().remove();
+                var parent = that.parent();
+                var facetrel = parent.next();
+                if ( !facetrel.length ) {
+                    facetrel = parent.prev();
+                }
+                facetrel.remove();
+                parent.remove();
             } else {
                 var button = that.siblings('[rel="' + that.attr('href') + '"]');
                 if(button.length == 0) {
