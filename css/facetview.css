@@ -87,3 +87,8 @@
     height: auto;
     margin-right: 5%;
 }
+
+.jstree-default .jstree-clicked {
+    background: white;
+    box-shadow: none;
+}
