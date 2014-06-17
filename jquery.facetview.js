@@ -526,11 +526,23 @@ remain visible even if there is only one possible value.
             if ( these.hasClass('facetview_open') ) {
                 these.removeClass('facetview_open');
                 these.siblings().hide();
-                these.siblings('.facetview_tree').jstree('open_all');
+             //   these.siblings('.facetview_tree').jstree('open_all');
             } else {
                 these.addClass('facetview_open');
+                var siblings = these.siblings();
                 these.siblings('.facetview_tree').jstree('close_all');
-                these.siblings().show();
+                siblings.show();
+                var or_button = these.siblings('.facetview_filter_options')
+                                        .find('.facetview_or').attr('rel');
+                if ( or_button === 'AND' ) {
+                    var children = siblings.children().children();
+                    for (var childID = 0; childID < children.length; childID++ ) {
+                        var child = $(children[childID]);
+                        if(child.text().indexOf('(0)') > -1 ) {
+                            child.hide();
+                        }
+                    }
+                }
             }
         };
 
