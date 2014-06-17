@@ -656,11 +656,12 @@ remain visible even if there is only one possible value.
                     var branch = $('#' + data.node.id);
                     tree.jstree("open_all", branch);
 
-                    var len = children.length;
-                    for (var idx = 0; idx < len; idx++) {
-                        var child = $('#' + children[idx]);
-                        clickfilterchoice(false, child.attr('rel'), child.attr('title'),false);
-                    }
+                    children.map(function(childID) {
+                        var child = $('#' + childID);
+                        if (child.hasClass('jstree-leaf')) {
+                            clickfilterchoice(false, child.attr('rel'), child.attr('title'),false);
+                        }
+                    })
                     dosearch();
                 }
             })
