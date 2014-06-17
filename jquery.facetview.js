@@ -662,7 +662,6 @@ remain visible even if there is only one possible value.
                         clickfilterchoice(false, child.attr('rel'), child.attr('title'),false);
                     }
                     dosearch();
-
                 }
             })
             .on('open_node.jstree', function (event, data) {
@@ -1204,6 +1203,7 @@ remain visible even if there is only one possible value.
                 current.text(current.attr('href'));
                 current.parent().hide();
             }
+            var open = $('.jstree-open');
 
             // for each filter setup, find the results for it and append them to the relevant filter
             for ( var each = 0; each < options.facets.length; each++ ) {
@@ -1272,6 +1272,9 @@ remain visible even if there is only one possible value.
                     }
 
                     tree.jstree('close_all');
+                    for ( var o_id = 0; o_id < open.length; o_id ++ ) {
+                        tree.jstree('open_node', $(open[o_id]));
+                    }
 
                 } else {
                     //function that converts the results to a json for the jstree
