@@ -1542,7 +1542,6 @@ remain visible even if there is only one possible value.
                         //check if seenor contains rel
                         var rel = $(this).attr('rel');
                         if( $.inArray(rel, seenor) == -1) {
-                        //if ( !($(this).attr('rel') in seenor) ) {
                             seenor.push(rel);
                             var myfilter = {'bool':{'should':[]}};
 
@@ -1576,8 +1575,15 @@ remain visible even if there is only one possible value.
                     } else {
                         var value = $(this).attr('href');
                         if(value === 'undefined') {
-                            !filter ? filter = {'missing':{'field':[]}} : "";
-                            filter.missing.field.push($(this).attr('rel'));
+                            var myfilter = { 'missing':
+                                            { 'field': $(this).attr('rel')}};
+                            if ( !filter ) {
+                                filter = myfilter;
+                            } else if ( filter.and ) {
+                                filter.and.push(myfilter);
+                            } else {
+                                filter = {'and':[filter, myfilter]};
+                            }
                         } else {
                             var bobj = {'term':{}};
                             bobj['term'][ $(this).attr('rel') ] = value;
@@ -1818,7 +1824,7 @@ remain visible even if there is only one possible value.
                 if ( 'filter' in qryflt ) {
                     var qry_flt = qryflt.filter;
                     if( 'missing' in qry_flt && 'field' in qry_flt.missing ) {
-                        flts = qry_flt.missing.field;
+                        flts = [qry_flt.missing.field];
                     } else if ( 'bool' in qry_flt
                         && 'should' in qry_flt.bool) {
                         var value = qry_flt.bool.should;
@@ -1849,6 +1855,9 @@ remain visible even if there is only one possible value.
                             if( 'bool' in currflt &&
                                 'should' in currflt.bool) {
                                 flts.push(currflt.bool.should);
+                            } else if ( 'missing' in currflt &&
+                                'field' in currflt.missing ) {
+                                flts.push(currflt.missing.field);
                             }
                         }
                     }
