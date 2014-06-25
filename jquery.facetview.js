@@ -1330,9 +1330,22 @@ remain visible even if there is only one possible value.
                     tree.find('.jstree-leaf').show();
 
                     //first set all values with count 0
+                    var parents = $('.jstree-node');
+                    var par_len = parents.length;
+                    for (var id = 0; id < par_len; id++) {
+                        var parent = parents[id];
+                        if (or_buttton_rel === 'AND') {
+                            tree.jstree(true).rename_node(
+                                $(parent), parent.title + ' (0)');
+                        } else {
+                            tree.jstree(true)
+                                .rename_node($(parent), parent.title);
+                        }
+                    }
+
                     var leaves = $('.jstree-leaf');
                     var len = leaves.length;
-                    for (var id = 0; id < len; id++) {
+                    for (id = 0; id < len; id++) {
                         var leaf = leaves[id];
                         if (or_buttton_rel === 'AND') {
                             tree.jstree(true).rename_node(
