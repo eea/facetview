@@ -514,7 +514,8 @@ remain visible even if there is only one possible value.
             'default_freetext_fuzzify': false,
             'static_filters': [],
             'hierarchy': false,
-            'permanent_filters': false
+            'permanent_filters': false,
+            'query_filter': false
         };
 
 
@@ -527,6 +528,9 @@ remain visible even if there is only one possible value.
         var url_options = $.getUrlVars();
         $.fn.facetview.options = $.extend(provided_options, url_options);
         var options = $.fn.facetview.options;
+
+        window.embed = url_options.embed;
+
         if (url_options.source) {
             var from = url_options.source.from;
             options.paging.from = !from ? options.paging.from : from;
@@ -1681,12 +1685,13 @@ remain visible even if there is only one possible value.
                                 $(this).attr('rel') + '"]').each(function() {
                                 if ($(this).hasClass('facetview_logic_or')) {
                                     var value = $(this).attr('href');
+                                    var ob;
                                     if (value === 'undefined') {
-                                        var ob = {'missing': {'field': []}};
+                                        ob = {'missing': {'field': []}};
                                         ob.missing.field.push(
                                             $(this).attr('rel'));
                                     } else {
-                                        var ob = {'term': {}};
+                                        ob = {'term': {}};
                                         ob.term[$(this).attr('rel')] = value;
                                    }
                                    myfilter.bool.should.push(ob);
@@ -1862,7 +1867,7 @@ remain visible even if there is only one possible value.
                 window.history.pushState('', 'search', currurl);
             }
             $.ajax({
-                type: 'get',
+                type: 'post',
                 url: options.search_url,
                 data: {source: qrystr},
                 // processData: false,
