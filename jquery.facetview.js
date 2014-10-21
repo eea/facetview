@@ -403,6 +403,18 @@ permanent_filters
 When this is set to true, the main filters (the defined facet values) will
 remain visible even if there is only one possible value.
 
+facet_display_options
+---------------------
+When this parameter is not an empty list, it defines a list of settings for
+displaying facet values.
+Possible values:
+    checkbox - when included, a checkbox is displayed in front of the options
+    sort - when included, one can sort the facet values
+The checkbox option is only possible for one layer trees
+
+
+
+
 */
 
 
@@ -515,7 +527,8 @@ remain visible even if there is only one possible value.
             'static_filters': [],
             'hierarchy': false,
             'permanent_filters': false,
-            'query_filter': false
+            'query_filter': false,
+            'facet_display_options' : []
         };
 
 
@@ -686,10 +699,12 @@ remain visible even if there is only one possible value.
             dosearch();
         };
 
-        function createtreefromdata(tree, ord, values) {
-
+        function createtreefromdata(tree, ord, opt, values) {
+            if (!opt) {
+                opt = [];
+            }
             tree.jstree({
-                'plugins' : ['sort', 'themes'],
+                'plugins' : opt,
                 'core' : {
                     'animation': 0,
                     'data' : values,
@@ -699,6 +714,11 @@ remain visible even if there is only one possible value.
                         'icons' : false,
                         'dots': true
                     }
+                },
+                'checkbox' : {
+                    'whole_node' : false,
+                    'keep_selected_style' : false,
+                    'tie_selection': false
                 },
                 'sort' : function(a, b) {
                     var a_text = this.get_node(a).text;
@@ -746,6 +766,11 @@ remain visible even if there is only one possible value.
                     });
                     dosearch();
                 }
+            })
+            .bind('deselect_node.jstree', function(event, data) {
+                var attributes = data.node.li_attr;
+                $('.facetview_filterselected[rel="' + attributes.rel +
+                  '"][href="' + attributes.title + '"]').trigger('click');
             })
             .on('open_node.jstree', function(event, data) {
                 var or_button = tree
@@ -811,7 +836,9 @@ remain visible even if there is only one possible value.
 
             var thejson = tree.jstree(true).get_json('#');
             tree.jstree('destroy');
-            createtreefromdata(tree, options.facets[which].order, thejson);
+            createtreefromdata(tree, options.facets[which].order,
+                               options.facets[which].facet_display_options,
+                               thejson);
 
         };
 
@@ -1022,6 +1049,7 @@ remain visible even if there is only one possible value.
 
                     createtreefromdata(tree,
                                        options.facets[which].order,
+                                       options.facets[which].facet_display_options,
                                        getJson(children, prop, rel));
                 }
 
@@ -1103,6 +1131,27 @@ remain visible even if there is only one possible value.
         var clearfilter = function(event) {
             event.preventDefault();
             var that = $(this);
+            var rel = that.attr('rel');
+            var display_opt = [];
+            var length = options.facets.length;
+
+            //in the case of a checkbox list, disable the checked option
+            for (var i = 0; i < length; i++) {
+                var item = options.facets[i];
+                if ('field' in item && item.field === rel) {
+                    display_opt = item.facet_display_options;
+                }
+            }
+            for (var opt in display_opt) {
+                if (display_opt[opt] === 'checkbox') {
+                    var box = $('li[rel="' + rel + '"][title="' +
+                                that.attr('href') + '"]');
+                    box.children('.jstree-clicked')
+                       .children('.jstree-checkbox').trigger('click');
+                    break;
+                }
+            }
+
             if (that.siblings().length <= 1) {
                 var parent = that.parent();
                 var facetrel = parent.next();
@@ -1453,11 +1502,13 @@ remain visible even if there is only one possible value.
                         createtreefromdata(
                             tree,
                             current_filter.order,
+                            current_filter.facet_display_options,
                             resultsToJson(records, facet, or_buttton_rel));
                     } else {
                         createtreefromdata(
                             tree,
                             current_filter.order,
+                            current_filter.facet_display_options,
                             updateJson(records, facet,
                                         oldJson, or_buttton_rel));
 
