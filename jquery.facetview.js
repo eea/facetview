@@ -2292,10 +2292,9 @@ The checkbox option is only possible for one layer trees
         if (options.facets.length > 0 || options.static_filters.length > 0) {
             thefacetview = [
                 thefacetview,
-                '<div class="span3"><div id="facetview_filters" ',
-                'style="padding-top:45px;"></div>',
-                '<div id="facetview_s_filters" style="padding-top:5px;">',
-                '</div><div id="facetview_trees" style="padding-top:5px;">',
+                '<div class="span3"><div id="facetview_filters">',
+                '<h3>Filter your results</h3></div>',
+                '<div id="facetview_trees" style="padding-top:5px;">',
                 '</div></div><div class="span9" id="facetview_rightcol">'
             ].join('');
         } else {
