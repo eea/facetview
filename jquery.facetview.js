@@ -619,6 +619,44 @@ The checkbox option is only possible for one layer trees
                         }
                     }
                 }
+                //find out if the list is ckecbox type
+                var checkbox = false;
+                var length = options.facets.length;
+                var title = these.attr('title');
+                //in the case of a checkbox list, disable the checked option
+                for (var i = 0; i < length; i++) {
+                    var item = options.facets[i];
+                    if ('field' in item && item.field === title) {
+                        display_opt = item.facet_display_options;
+                        for (var opt in display_opt) {
+                            if (display_opt[opt] === 'checkbox') {
+                                checkbox = true;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (checkbox) {
+                    /* if the checkbox display option is set, checked values
+                    should be as many as the ones in facetview_filterselected
+                    */
+                    var selected = $('.facetview_filterselected[rel="' +
+                                     title + '"]');
+                    var len = selected.length;
+                    var checked = these.siblings('.jstree')
+                                        .find('.jstree-clicked').length;
+                    if (checked !== len) {
+                        for (i = 0; i <= len; i++) {
+                            var option = selected[i];
+                            var rel = $(option).attr('rel');
+                            var href = $(option).attr('href');
+                            var box = $('li[rel="' + rel + '"][title="' +
+                                        href + '"]');
+                            box.find('.jstree-checkbox').trigger('click');
+                        }
+                    }
+                }
             }
         };
 
@@ -716,7 +754,7 @@ The checkbox option is only possible for one layer trees
                     }
                 },
                 'checkbox' : {
-                    'whole_node' : false,
+                    'whole_node' : true,
                     'keep_selected_style' : false,
                     'tie_selection': false
                 },
@@ -1072,6 +1110,7 @@ The checkbox option is only possible for one layer trees
                 var href = $(this).attr('href');
             }
             var relclean = rel.replace(/\./gi, '_').replace(/\:/gi, '_');
+
             // Do nothing if element already exists.
             if ($('a.facetview_filterselected[href="' + href +
                     '"][rel="' + rel + '"]').length) {
