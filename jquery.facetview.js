@@ -657,6 +657,16 @@ The checkbox option is only possible for one layer trees
                         }
                     }
                 }
+                //adjust the tree height
+                var lineHeight = $('.jstree-node').height();
+                var tree = these.siblings('.jstree');
+                var ulHeight = tree.children('.jstree-container-ul').height();
+                if (lineHeight) {
+                    var treeHeight = Math.min(ulHeight, 10 * lineHeight);
+                    tree.height(treeHeight + 'px');
+                } else {
+                    tree.height(ulHeight + 'px');
+                }
             }
         };
 
@@ -1063,7 +1073,7 @@ The checkbox option is only possible for one layer trees
                             rel,
                             '</a> </div>',
                             '<div class="facetview_tree" style="display:none;',
-                            ' border:solid #f0f0f0 1px;" rel="',
+                            ' border:solid #f0f0f0 1px; height:250px" rel="',
                             prop,
                             '"></div></div>'
                         ].join('');
@@ -1677,19 +1687,22 @@ The checkbox option is only possible for one layer trees
                 options.post_search_callback.call(this);
             }
 
-            //set tree height
-            var treeHeight = $('#facetview_rightcol').height() * 0.8;
+            //set tree height as 10 lines
             var trees = $('div.facetview_tree');
             var treeNum = trees.length;
-
-            for (var id = 0; id < treeNum; id++) {
-                var tree = $(trees[id]);
-                var localNum = treeHeight / treeNum;
-                var innerNum = tree.children('.jstree-container-ul').height();
-                if (tree.is(':visible') && innerNum < localNum) {
-                    tree.height(innerNum + 'px');
-                } else {
-                    tree.height(localNum + 'px');
+            for (var treeid = 0; treeid < treeNum; treeid++) {
+                var current_tree = $(trees[treeid]);
+                if (current_tree.is(':visible')) {
+                    var lineHeight = current_tree.find('.jstree-leaf').height();
+                    var ulHeight = current_tree
+                                    .children('.jstree-container-ul')
+                                    .height();
+                    var treeHeight = Math.max(
+                                        lineHeight,
+                                        Math.min(
+                                            ulHeight,
+                                            10 * lineHeight));
+                    current_tree.height(treeHeight + 'px');
                 }
             }
         };
