@@ -661,12 +661,10 @@ The checkbox option is only possible for one layer trees
                 var lineHeight = $('.jstree-node').height();
                 var tree = these.siblings('.jstree');
                 var ulHeight = tree.children('.jstree-container-ul').height();
-                if (lineHeight) {
-                    var treeHeight = Math.min(ulHeight, 10 * lineHeight);
-                    tree.height(treeHeight + 'px');
-                } else {
-                    tree.height(ulHeight + 'px');
+                if (!lineHeight) {
+                    lineHeight = ulHeight / tree.find('.jstree-node').length;
                 }
+                tree.height(Math.min(ulHeight, 10 * lineHeight) + 'px');
             }
         };
 
