@@ -1043,7 +1043,7 @@ The checkbox option is only possible for one layer trees
                     html = [html,
                             '<div class="facetview_filter" ',
                             'style="margin-top:10px"> <a ',
-                            'class="facetview_showtree" title="',
+                            'class="facetview_showtree " title="',
                             prop,
                             '" id="',
                             prop,
@@ -1397,6 +1397,13 @@ The checkbox option is only possible for one layer trees
 
         // put the results on the page
         var showresults = function(sdata) {
+            //set the heights for each tree in a cookie
+            var heights = [];
+            var trees = $('.jstree');
+            for (var treeID = 0; treeID < trees.length; treeID++) {
+                heights.push($(trees[treeID]).height());
+            }
+            document.cookie = 'heights=' + JSON.stringify(heights) + '; path=/';
             options.rawdata = sdata;
             // get the data and parse from the es layout
             var data = parseresults(sdata);
@@ -1685,25 +1692,41 @@ The checkbox option is only possible for one layer trees
                 options.post_search_callback.call(this);
             }
 
-            //set tree height as 10 lines
+            //set tree height as the last user setting or 10 lines
             var trees = $('div.facetview_tree');
             var treeNum = trees.length;
-            for (var treeid = 0; treeid < treeNum; treeid++) {
-                var current_tree = $(trees[treeid]);
+
+            heights = JSON.parse(getCookie('heights'));
+            for (var treeID = 0; treeID < treeNum; treeID++) {
+                var current_tree = $(trees[treeID]);
                 if (current_tree.is(':visible')) {
-                    var lineHeight = current_tree.find('.jstree-leaf').height();
+                    var prefHeight = heights[treeID];
+                    if (prefHeight === 0) {
+                        prefHeight = 10 *
+                                     current_tree.find('.jstree-leaf').height();
+                    }
                     var ulHeight = current_tree
                                     .children('.jstree-container-ul')
                                     .height();
-                    var treeHeight = Math.max(
-                                        lineHeight,
-                                        Math.min(
-                                            ulHeight,
-                                            10 * lineHeight));
+                    var treeHeight = Math.min (ulHeight, prefHeight);
                     current_tree.height(treeHeight + 'px');
                 }
             }
         };
+
+        //get a cookie by name
+        function getCookie (cookieName) {
+            var cookies = document.cookie.split(';');
+            for (var ci = 0; ci < cookies.length; ci++) {
+                var cookie = cookies[ci].trim();
+                var id = cookie.indexOf(cookieName);
+                var clen = cookieName.length;
+                if (id === 0 && cookie.indexOf('=') === clen ) {
+                    return cookie.substring(clen + 1, cookie.length);
+                }
+            }
+            return '';
+        }
 
         // ===============================================
         // functions to do with searching
