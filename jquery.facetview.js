@@ -1048,7 +1048,7 @@ The checkbox option is only possible for one layer trees
                             prop,
                             '">',
                             valuetext,
-                            ' </h2> ',
+                            '<span class="facetview_arrow_right"/> </h2> ',
                             '<div class="btn-group facetview_filter_options" ',
                             'style="display:none; margin-top:5px;">',
                             '<a class="btn btn-small facetview_sort ',
