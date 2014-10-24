@@ -1041,15 +1041,14 @@ The checkbox option is only possible for one layer trees
                     }
                     var myOrder = orderConstants[ord];
                     html = [html,
-                            '<div class="facetview_filter" ',
-                            'style="margin-top:10px"> <a ',
+                            '<div class="facetview_filter"> <h2 ',
                             'class="facetview_showtree " title="',
                             prop,
                             '" id="',
                             prop,
                             '">',
                             valuetext,
-                            ' </a> ',
+                            ' </h2> ',
                             '<div class="btn-group facetview_filter_options" ',
                             'style="display:none; margin-top:5px;">',
                             '<a class="btn btn-small facetview_sort ',
@@ -1397,13 +1396,13 @@ The checkbox option is only possible for one layer trees
 
         // put the results on the page
         var showresults = function(sdata) {
-            //set the heights for each tree in a cookie
+            //set the heights for each tree
             var heights = [];
             var trees = $('.jstree');
             for (var treeID = 0; treeID < trees.length; treeID++) {
                 heights.push($(trees[treeID]).height());
             }
-            document.cookie = 'heights=' + JSON.stringify(heights) + '; path=/';
+
             options.rawdata = sdata;
             // get the data and parse from the es layout
             var data = parseresults(sdata);
@@ -1696,7 +1695,7 @@ The checkbox option is only possible for one layer trees
             var trees = $('div.facetview_tree');
             var treeNum = trees.length;
 
-            heights = JSON.parse(getCookie('heights'));
+            //heights = JSON.parse(getCookie('heights'));
             for (var treeID = 0; treeID < treeNum; treeID++) {
                 var current_tree = $(trees[treeID]);
                 if (current_tree.is(':visible')) {
@@ -2366,8 +2365,8 @@ The checkbox option is only possible for one layer trees
             thefacetview = [
                 thefacetview,
                 '<div class="span3"><div id="facetview_filters">',
-                '<h3>Filter your results</h3></div>',
-                '<div id="facetview_trees" style="padding-top:5px;">',
+                '<h2>Filter your results</h2></div>',
+                '<div id="facetview_trees" style="padding-top:0px;">',
                 '</div></div><div class="span9" id="facetview_rightcol">'
             ].join('');
         } else {
