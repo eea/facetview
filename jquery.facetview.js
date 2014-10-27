@@ -1990,7 +1990,7 @@ The checkbox option is only possible for one layer trees
                 window.history.pushState('', 'search', currurl);
             }
             $.ajax({
-                type: 'post',
+                type: 'get',
                 url: options.search_url,
                 data: {source: qrystr},
                 // processData: false,
