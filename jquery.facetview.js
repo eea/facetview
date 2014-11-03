@@ -2516,8 +2516,19 @@ The checkbox option is only possible for one layer trees
                 // set any default search values into the search bar and create
                 // any required filters
                 if (options.searchbox_class.length == 0) {
+                    var q = options.q.trim();
+                    var wildc = options.default_freetext_fuzzify;
+                    if (wildc != undefined) {
+                        if (q.indexOf(wildc) === 0) {
+                            q = q.slice(1);
+                        }
+                        if (q.slice(-1) === wildc) {
+                            q = q.slice(0, -1);
+                        }
+                    }
+
                     options.q != '' ?
-                        $('.facetview_freetext', obj).val(options.q) : '';
+                        $('.facetview_freetext', obj).val(q) : '';
                     buildfilters();
                     $('.facetview_freetext', obj).bindWithDelay(
                         'keyup',
