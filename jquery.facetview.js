@@ -817,6 +817,10 @@ The checkbox option is only possible for one layer trees
                 var attributes = data.node.li_attr;
                 $('.facetview_filterselected[rel="' + attributes.rel +
                   '"][href="' + attributes.title + '"]').trigger('click');
+                //reset
+                var parent_tree = $(this);
+                var lineHeight = parent_tree.find('.jstree-leaf').height();
+                parent_tree.height(10 * lineHeight + 'px');
             })
             .on('open_node.jstree', function(event, data) {
                 var or_button = tree
