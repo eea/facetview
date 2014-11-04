@@ -671,9 +671,7 @@ The checkbox option is only possible for one layer trees
         //recursive function that returns the json in a hierarchy
         var getJson = function(value, property, rel) {
             var count = '';
-            if (rel === 'AND') {
-                count = ' (0)';
-            }
+            count = ' (0)';
             var jsonval = [];
             if (typeof value === 'string') {
                 jsonval.push(
@@ -1444,55 +1442,55 @@ The checkbox option is only possible for one layer trees
                     var par_len = parents.length;
                     for (var id = 0; id < par_len; id++) {
                         var parent = parents[id];
-                        if (or_buttton_rel === 'AND') {
-                            tree.jstree(true).rename_node(
+                        //if (or_buttton_rel === 'AND') {
+                        tree.jstree(true).rename_node(
                                 $(parent), parent.title + ' (0)');
-                        } else {
-                            tree.jstree(true)
-                                .rename_node($(parent), parent.title);
-                        }
+                        //} else {
+                        //    tree.jstree(true)
+                        //        .rename_node($(parent), parent.title);
+                        //}
                     }
 
+
+                    //set the values for the leaves
+                    for (var item in records) {
+                        var record = records[item];
+                        var inTree = $('.jstree-leaf[title="' + item + '"]');
+
+                        if (inTree.length > 0) {
+                            tree.jstree(true).rename_node(
+                                inTree, item + ' (' + record + ')');
+                        }
+                    }
+                    //set the values for the parents
+                    var values = $('.facetview_filterchoice[rel="' +
+                                    facet + '"]:not(.jstree-leaf)');
+
+                    for (var id = 0; id < values.length; id++) {
+                        var value = $(values[id]);
+                        var result = 0;
+                        var leafChildren = value.find('.jstree-leaf');
+                        var leaflen = leafChildren.length;
+                        for (var idx = 0; idx < leaflen; idx++) {
+                                var val = leafChildren[idx].textContent;
+                                var start = val.indexOf('(');
+                                var stop = val.indexOf(')');
+                                val = parseInt(
+                                    val.substring(start + 1, stop)) || 0;
+                                result += val;
+                        }
+                        if (result >= 0)
+                            tree.jstree(true).rename_node(
+                                value,
+                                value.attr('title') + ' (' + result + ')');
+                    }
+                    //hide the ones with no values
+                    values = $('.jstree-node[rel="' + facet + '"]');
                     if (or_buttton_rel === 'AND') {
-                        //set the values for the leaves
-                        for (var item in records) {
-                            var record = records[item];
-                            var inTree = $('.jstree-leaf[title="' +
-                                            item + '"]');
-
-                            if (inTree.length > 0) {
-                                tree.jstree(true).rename_node(
-                                    inTree, item + ' (' + record + ')');
-                            }
-                        }
-                        //set the values for the parents
-                        var values = $('.facetview_filterchoice[rel="' +
-                                        facet + '"]:not(.jstree-leaf)');
-
-                        for (var id = 0; id < values.length; id++) {
-                            var value = $(values[id]);
-                            var result = 0;
-                            var leafChildren = value.find('.jstree-leaf');
-                            var leaflen = leafChildren.length;
-                            for (var idx = 0; idx < leaflen; idx++) {
-                                    var val = leafChildren[idx].textContent;
-                                    var start = val.indexOf('(');
-                                    var stop = val.indexOf(')');
-                                    val = parseInt(
-                                        val.substring(start + 1, stop)) || 0;
-                                    result += val;
-                            }
-                            if (result >= 0)
-                                tree.jstree(true).rename_node(
-                                    value,
-                                    value.attr('title') + ' (' + result + ')');
-                        }
-                        //hide the ones with no values
-                        values = $('.jstree-node[rel="' + facet + '"]');
                         for (id = 0; id < values.length; id++) {
                             var value = values[id];
                             var text = $(value).children('a.jstree-anchor')
-                                                    .text();
+                                                .text();
                             if (text.indexOf('(0)') != -1) {
                                 $(value).hide();
                             }
@@ -1509,7 +1507,7 @@ The checkbox option is only possible for one layer trees
                     //the jstree
                     var resultsToJson = function(results, property, rel) {
                         var jsonval = [];
-                        if (rel === 'AND') {
+                        if (rel === 'AND' || rel === 'OR') {
                             for (var element in results) {
                                 jsonval.push({
                                     'text' : element + ' (' +
@@ -1540,14 +1538,10 @@ The checkbox option is only possible for one layer trees
                             var value = json[element];
                             var text = value.li_attr.title;
                             var result_val = results[text];
-                            if (rel === 'AND') {
-                                if (result_val === undefined) {
-                                    value.text = text + ' (0)';
-                                } else {
-                                    value.text = text + ' (' + result_val + ')';
-                                }
+                            if (result_val === undefined) {
+                                value.text = text + ' (0)';
                             } else {
-                                value.text = text;
+                                value.text = text + ' (' + result_val + ')';
                             }
                         }
                         return json;
