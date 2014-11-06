@@ -2054,11 +2054,12 @@ The checkbox option is only possible for one layer trees
         var orderby = function(event) {
             event ? event.preventDefault() : '';
             var sortchoice = $('.facetview_orderby', obj).val();
+            var sortoption = $('.facetview_orderby').attr('href');
             if (sortchoice.length != 0) {
                 var sorting = {};
                 var sorton = sortchoice;
                 sorting[sorton] = {
-                    'order': $('.facetview_order', obj).attr('href')
+                    'order': sortoption
                 };
                 options.sort = [sorting];
                 options.selected_sort = [sorting];
@@ -2358,40 +2359,53 @@ The checkbox option is only possible for one layer trees
         ].join('');
 
         // the facet view object to be appended to the page
-        var thefacetview = '<div id="facetview"><div class="row-fluid">';
-        if (options.facets.length > 0 || options.static_filters.length > 0) {
+        var thefacetview = [
+            '<div id="facetview"><div class="row-fluid">',
+            '<div class="facetview_search_options_container span12">',
+            '<input type="text" class="facetview_freetext span11" ',
+            'style="display:block; margin-left:auto; margin-right: auto; ',
+            'background:',
+            options.searchbox_shade,
+            '; name="q" value="" placeholder="search term" /> <div ',
+            'class="btn-group" style="display:inline-block; margin-right:5px;',
+            ' width:100%"> <a class="btn btn-small" style="float:right" ',
+            'title="clear all search settings and start again" ',
+            'href="{{REFRESH}}"> <i class="icon-remove">',
+            '</i></a> <a class="btn btn-small facetview_learnmore" ',
+            'style="float:right" title="click to view search help information"',
+            ' href="#"><b>?</b></a><a class="btn btn-small facetview_howmany"',
+            ' title="change result set size" href="#">{{HOW_MANY}}</a>'
+            ].join('');
+        if (options.sharesave_link) {
             thefacetview = [
                 thefacetview,
-                '<div class="span3"><div id="facetview_filters">',
-                '<h2>Filter your results</h2></div>',
-                '<div id="facetview_trees" style="padding-top:0px;">',
-                '</div></div><div class="span9" id="facetview_rightcol">'
+                '<a class="btn facetview_sharesave" title="share or save this',
+                ' search" href="" style="float:right"> <i ',
+                'class="icon-share-alt"></i></a><div ',
+                'class="facetview_sharesavebox alert alert-info" ',
+                'style="float:right; display:none; "> <button type="button" ',
+                'class="facetview_sharesave close">×</button><p>Share or save',
+                ' this search:</p> <textarea class="facetview_sharesaveurl" ',
+                'style="width:100%;height:100px;">http://',
+                window.location.host,
+                window.location.pathname,
+                '?source=',
+                options.querystring,
+                '</textarea> </div>',
+                thehelp
             ].join('');
         } else {
-            thefacetview += '<div class="span12" id="facetview_rightcol">';
+            facetview += '</div>';
         }
-        thefacetview = [
-            thefacetview,
-            '<div class="facetview_search_options_container">',
-            '<div class="btn-group" style="display:inline-block; ',
-            'margin-right:5px;"> <a class="btn btn-small" title="clear all ',
-            'search settings and start again" href="{{REFRESH}}">',
-            '<i class="icon-remove"></i></a> <a class="btn btn-small ',
-            'facetview_learnmore" title="click to view search help ',
-            'information" href="#"><b>?</b></a> <a class="btn btn-small ',
-            'facetview_howmany" title="change result set size" ',
-            'href="#">{{HOW_MANY}}</a>'
-        ].join('');
+
         if (options.search_sortby.length >= 0) {
             thefacetview = [
                 thefacetview,
-                '<a class="btn btn-small facetview_order" title="current order',
-                ' descending. Click to change to ascending" href="desc">',
-                '<i class="icon-arrow-down"></i></a></div>',
                 '<select class="facetview_orderby" style="border-radius:5px; ',
-                '-moz-border-radius:5px; -webkit-border-radius:5px; ',
-                'width:150px; background:#eee; margin:0 5px 21px 0;"> ',
-                '<option value="">Order by: Relevance</option>'
+                'float:right; -moz-border-radius:5px; -webkit-border-radius:5px; ',
+                'width:auto; background:#eee; margin:0 5px 21px 0;"> ',
+                '<option href="asc">Order by: Relevance ascending</option> ',
+                '<option href="desc">Order by: Relevance descending</option>'
             ].join('');
             for (var each = 0; each < options.search_sortby.length; each++) {
                 var selected = '';
@@ -2400,19 +2414,40 @@ The checkbox option is only possible for one layer trees
                     options.sort[0][obj['field']] != undefined) {
                     selected = 'selected=""';
                 }
+                var sorttype = obj['display'];
                 thefacetview += [
                     '<option value="',
                     obj['field'],
-                    '" ',
+                    '" href="asc" ',
                     selected,
-                    '">Order by: ',
-                    obj['display'],
-                    '</option>'
+                    '>Order by: ',
+                    sorttype,
+                    ' ascending </option> <option value="',
+                    obj['field'],
+                    '" href="desc">Order by: ',
+                    sorttype,
+                    ' descending </option>'
                 ].join('');
             }
             thefacetview += '</select>';
+        }
+        thefacetview = [
+            thefacetview,
+            '<div style="clear:both;" class="btn-toolbar" ',
+            'id="facetview_selectedfilters"></div>',
+            '</div></div><div class="span12" style="margin-left:0px">'
+            ].join('');
+
+        if (options.facets.length > 0 || options.static_filters.length > 0) {
+            thefacetview = [
+                thefacetview,
+                '<div class="span3" style="margin-left:0px">',
+                '<div id="facetview_filters"><h2>Filter your results</h2></div>',
+                '<div id="facetview_trees" style="padding-top:0px;">',
+                '</div></div><div class="span9" id="facetview_rightcol">'
+            ].join('');
         } else {
-            thefacetview += '</div>';
+            thefacetview += '<div class="span12" id="facetview_rightcol">';
         }
         if (options.searchbox_fieldselect.length > 0) {
             thefacetview = [
@@ -2438,40 +2473,14 @@ The checkbox option is only possible for one layer trees
             }
             thefacetview += '</select>';
         }
-        thefacetview += [
-            '<input type="text" class="facetview_freetext span4" ',
-            'style="display:inline-block; margin:0 0 21px 0; background:',
-            options.searchbox_shade,
-            '; width:290px" name="q" value="" placeholder="search term" />'
-        ].join('');
-        if (options.sharesave_link) {
-            thefacetview = [
-                thefacetview,
-                '<a class="btn facetview_sharesave" title="share or save this',
-                ' search" style="margin:0 0 21px 5px;" href="">',
-                '<i class="icon-share-alt"></i></a>',
-                '<div class="facetview_sharesavebox alert alert-info" ',
-                'style="display:none;"> <button type="button" ',
-                'class="facetview_sharesave close">×</button> <p>Share or save',
-                ' this search:</p> <textarea class="facetview_sharesaveurl" ',
-                'style="width:100%;height:100px;">http://',
-                window.location.host,
-                window.location.pathname,
-                '?source=',
-                options.querystring,
-                '</textarea> </div></div>',
-                thehelp,
-                '<div style="clear:both;" class="btn-toolbar" ',
-                'id="facetview_selectedfilters"></div>'
-            ].join('');
-        }
+
         options.pager_on_top ?
             thefacetview += '<div class="facetview_metadata" ' +
                 'style="margin-top:20px;"></div>' :
             '';
         thefacetview += options.searchwrap_start + options.searchwrap_end;
         thefacetview += '<div class="facetview_metadata">' +
-            '</div></div></div></div>';
+            '</div></div></div></div></div>';
 
         var obj = undefined;
 
@@ -2496,8 +2505,7 @@ The checkbox option is only possible for one layer trees
                 $('.facetview_learnmore', obj).bind('click', learnmore);
                 $('.facetview_howmany', obj).bind('click', howmany);
                 $('.facetview_searchfield', obj).bind('change', searchfield);
-                $('.facetview_orderby', obj).bind('change', orderby);
-                $('.facetview_order', obj).bind('click', order);
+                $('.facetview_orderby', obj).bind('click', orderby);
                 $('.facetview_sharesave', obj).bind('click', sharesave);
 
                 // check paging info is available
