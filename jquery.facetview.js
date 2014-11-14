@@ -412,7 +412,10 @@ Possible values:
     sort - when included, one can sort the facet values
 The checkbox option is only possible for one layer trees
 
-
+no_results_message
+------------------
+Custom message to display when there are no results found for the search. The
+default one is "Not found..."
 
 
 */
@@ -528,7 +531,8 @@ The checkbox option is only possible for one layer trees
             'hierarchy': false,
             'permanent_filters': false,
             'query_filter': false,
-            'facet_display_options' : []
+            'facet_display_options' : [],
+            'no_results_message' : false
         };
 
 
@@ -1636,7 +1640,12 @@ The checkbox option is only possible for one layer trees
                     'href="{{to}}">next &raquo;</a></li> </ul> </div>'
                 ].join('');
             }
-            $('.facetview_metadata', obj).first().html('Not found...');
+            if (options.no_results_message) {
+                $('.facetview_metadata', obj).first().html(options.no_results_message);
+            } else {
+                $('.facetview_metadata', obj).first().html('Not found...');
+            }
+
             if (data.found) {
                 var from = options.paging.from + 1;
                 var size = options.paging.size;
