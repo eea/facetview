@@ -1640,6 +1640,7 @@ default one is "Not found..."
                     'href="{{to}}">next &raquo;</a></li> </ul> </div>'
                 ].join('');
             }
+            $('.facetview_metadata', obj).html('');
             if (options.no_results_message) {
                 $('.facetview_metadata', obj).first().html(options.no_results_message);
             } else {
@@ -2062,9 +2063,9 @@ default one is "Not found..."
 
         var orderby = function(event) {
             event ? event.preventDefault() : '';
-            var sortchoice = $('.facetview_orderby', obj).val();
-            var sortoption = $('.facetview_orderby').attr('href');
-            if (sortchoice.length != 0) {
+            var sortchoice = $('.facetview_orderby :selected').val();
+            var sortoption = $('.facetview_orderby :selected').attr('href');
+            if (sortchoice && sortchoice.length != 0) {
                 var sorting = {};
                 var sorton = sortchoice;
                 sorting[sorton] = {
@@ -2410,11 +2411,11 @@ default one is "Not found..."
         if (options.search_sortby.length >= 0) {
             thefacetview = [
                 thefacetview,
+                '<span class="orderby">Order by &nbsp;</span>',
                 '<select class="facetview_orderby" style="border-radius:5px; ',
                 'float:right; -moz-border-radius:5px; -webkit-border-radius:5px; ',
                 'width:auto; background:#eee; margin:0 5px 21px 0;"> ',
-                '<option href="asc">Order by: Relevance ascending</option> ',
-                '<option href="desc">Order by: Relevance descending</option>'
+                '<option value="">Relevance</option> '
             ].join('');
             for (var each = 0; each < options.search_sortby.length; each++) {
                 var selected = '';
@@ -2429,11 +2430,11 @@ default one is "Not found..."
                     obj['field'],
                     '" href="asc" ',
                     selected,
-                    '>Order by: ',
+                    '> ',
                     sorttype,
                     ' ascending </option> <option value="',
                     obj['field'],
-                    '" href="desc">Order by: ',
+                    '" href="desc"> ',
                     sorttype,
                     ' descending </option>'
                 ].join('');
@@ -2514,7 +2515,7 @@ default one is "Not found..."
                 $('.facetview_learnmore', obj).bind('click', learnmore);
                 $('.facetview_howmany', obj).bind('click', howmany);
                 $('.facetview_searchfield', obj).bind('change', searchfield);
-                $('.facetview_orderby', obj).bind('click', orderby);
+                $('.facetview_orderby', obj).bind('change', orderby);
                 $('.facetview_sharesave', obj).bind('click', sharesave);
 
                 // check paging info is available
