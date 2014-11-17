@@ -662,12 +662,17 @@ default one is "Not found..."
                     }
                 }
                 //adjust the tree height
-                var lineHeight = $('.jstree-node').height();
+                var nodes = $('.jstree-node');
+                var lineHeight = nodes.height();
+                var id = 0;
+                while (!lineHeight) {
+                    lineHeight = $(nodes[id]).height();
+                    id += 1;
+                }
+
                 var tree = these.siblings('.jstree');
                 var ulHeight = tree.children('.jstree-container-ul').height();
-                if (!lineHeight) {
-                    lineHeight = ulHeight / tree.find('.jstree-node').length;
-                }
+
                 tree.height(Math.min(ulHeight, 10 * lineHeight) + 'px');
             }
         };
