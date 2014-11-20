@@ -920,6 +920,7 @@ default one is "Not found..."
             ].join('');
 
             $('#facetview_selectedfilters', obj).append(newobj);
+            $('#facetview_selected_filters', obj).append(newobj);
             $('.facetview_filterselected', obj).unbind('click', clearfilter);
             $('.facetview_filterselected', obj).bind('click', clearfilter);
             options.paging.from = 0;
@@ -1137,44 +1138,47 @@ default one is "Not found..."
                 return null;
             }
 
-            var newobj = '<a class="facetview_filterselected facetview_clear' +
-                            ' btn btn-info';
+            var myobj = '<div class="facetview_selection"> <a ' +
+                        'class="facetview_filterselected facetview_clear btn';
             var operation = $('.facetview_or[href="' + rel + '"]', obj);
             var op_text = 'AND';
             if (operation.attr('rel') === 'OR' || initor) {
-                newobj += ' facetview_logic_or';
+                myobj += ' facetview_logic_or';
                 op_text = 'OR';
             }
-            newobj = [newobj,
-                      '" rel="',
-                      rel,
-                      '" alt="remove" title="remove" href="',
-                      href,
-                      '">',
-                      href,
-                      ' <i class="icon-white icon-remove" ',
-                      'style="margin-top:1px;"></i></a>'
+            myobj = [myobj,
+                     '" rel="',
+                     rel,
+                     '" alt="remove" title="remove" href="',
+                     href,
+                     '">',
+                     ' <i class="icon-white icon-remove" ',
+                     'style="margin-top:1px;"></i></a>',
+                     href,
+                     '</div>'
                     ].join('');
 
             if ($('div[id="facetview_group_' + relclean + '"]', obj).length) {
-                newobj = '<a class="btn btn-small rel-between" rel="' + href +
-                    '"" style="color:#aaa">' + op_text + '</a>' + newobj;
+                myobj = '<a class="btn btn-small rel-between" rel="' + href +
+                    '" style="color:#aaa">' + op_text + '</a>' + myobj;
                 $('div[id="facetview_group_' + relclean + '"]', obj)
-                    .append(newobj);
+                    .append(myobj);
+
             } else {
-                var pobj = [pobj,
+                var pobj = [
                             '<div id="facetview_group_',
                             relclean,
                             '" class="btn-group facetview_selected">',
-                            newobj,
+                            myobj,
                             '</div>'
                             ].join('');
                 if ($('div.facetview_selected').length) {
                     pobj = '<div class="facet-rel-between"> <a class="btn ' +
-                            'btn-small facet_operator"> AND</div>' + pobj;
+                            'btn-small facet_operator"> AND</a></div>' + pobj;
                 }
 
-                $('#facetview_selectedfilters', obj).append(pobj);
+                //$('#facetview_selectedfilters', obj).append(pobj);
+                $('#facetview_selected_filters', obj).append(pobj);
             }
 
             $('.facetview_filterselected', obj).unbind('click', clearfilter);
@@ -1211,22 +1215,25 @@ default one is "Not found..."
                 }
             }
 
-            if (that.siblings().length <= 1) {
-                var parent = that.parent();
+            var toDelete = that.parent();
+
+            if (toDelete.siblings().length <= 1) {
+                var parent = toDelete.parent();
                 var facetrel = parent.next();
+
                 if (!facetrel.length) {
                     facetrel = parent.prev();
                 }
                 facetrel.remove();
                 parent.remove();
             } else {
-                var button = that.siblings('[rel="' + that.attr('href') + '"]');
+                var button = toDelete.siblings('[rel="' + that.attr('href') + '"]');
                 if (button.length === 0) {
-                    $(that.siblings('.rel-between')[0]).remove();
+                    $(toDelete.siblings('.rel-between')[0]).remove();
                 } else {
                     button.remove();
                 }
-                that.remove();
+                toDelete.remove();
             }
             options.paging.from = 0;
             dosearch();
@@ -1751,7 +1758,7 @@ default one is "Not found..."
             var rqs = querystr;
             if (options.default_freetext_fuzzify !== undefined) {
                 if (options.default_freetext_fuzzify === '*' ||
-                    options.default_freetext_fuzzify === '~') {
+                    options.default_freetext_fuzzify.indexOf('~') > -1) {
                     if (querystr.indexOf('*') === -1 &&
                         querystr.indexOf('~') === -1 &&
                         querystr.indexOf(':') === -1) {
@@ -2459,7 +2466,11 @@ default one is "Not found..."
             thefacetview = [
                 thefacetview,
                 '<div class="span3" style="margin-left:0px">',
-                '<div id="facetview_filters"><h2>Filter your results</h2></div>',
+                '<div id="facetview_filters"><h2>Filter your results</h2>',
+                '</div><div class="current-filters">',
+                '<div class="filters-header"><strong>Current filters',
+                '</strong><small> <a href="#">Clear all</a></small> </div> ',
+                '<div class="facetview-filter-values" id="facetview_selected_filters"></div></div>',
                 '<div id="facetview_trees" style="padding-top:0px;">',
                 '</div></div><div class="span9" id="facetview_rightcol">'
             ].join('');
@@ -2542,11 +2553,13 @@ default one is "Not found..."
                     var q = options.q.trim();
                     var wildc = options.default_freetext_fuzzify;
                     if (wildc != undefined) {
-                        if (q.indexOf(wildc) === 0) {
+                        var indexof = q.indexOf(wildc);
+                        var wildchars = wildc.length;
+                        if (indexof === 0) {
                             q = q.slice(1);
                         }
-                        if (q.slice(-1) === wildc) {
-                            q = q.slice(0, -1);
+                        if (indexof + wildchars === q.length) {
+                            q = q.slice(0, - wildchars);
                         }
                     }
 
