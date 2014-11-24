@@ -2385,17 +2385,9 @@ default one is "Not found..."
         // the facet view object to be appended to the page
         var thefacetview = [
             '<div id="facetview"><div class="row-fluid">',
-            '<div class="facetview_search_options_container span12">',
-            '<input type="text" class="facetview_freetext span11" ',
-            'style="display:block; margin-left:auto; margin-right: auto; ',
-            'background:',
-            options.searchbox_shade,
-            '; name="q" value="" placeholder="search term" /> <div ',
+            '<div class="facetview_search_options_container span12"> <div ',
             'class="btn-group" style="display:inline-block; margin-right:5px;',
-            ' width:100%"> <a class="btn btn-small" style="float:right" ',
-            'title="clear all search settings and start again" ',
-            'href="{{REFRESH}}"> <i class="icon-remove">',
-            '</i></a> <a class="btn btn-small facetview_learnmore" ',
+            ' width:100%"> <a class="btn btn-small facetview_learnmore" ',
             'style="float:right" title="click to view search help information"',
             ' href="#"><b>?</b></a><a class="btn btn-small facetview_howmany"',
             ' title="change result set size" href="#">{{HOW_MANY}}</a>'
@@ -2421,6 +2413,47 @@ default one is "Not found..."
         } else {
             facetview += '</div>';
         }
+
+        thefacetview = [
+            thefacetview,
+            '<div style="clear:both;" class="btn-toolbar" ',
+            'id="facetview_selectedfilters"></div>',
+            '</div></div><div class="span12" style="margin-left:0px">'
+            ].join('');
+
+        if (options.facets.length > 0 || options.static_filters.length > 0) {
+            thefacetview = [
+                thefacetview,
+                '<div class="span3" style="margin-left:0px">',
+                '<div id="facetview_filters"><h2>Filter your results</h2>',
+                '</div><div class="current-filters">',
+                '<div class="filters-header"><strong>Current filters',
+                '</strong><small> <a href="{{REFRESH}}">Clear all</a></small> </div> ',
+                '<div class="facetview-filter-values" id="facetview_selected_filters"></div></div>',
+                '<div id="facetview_trees" style="padding-top:0px;">',
+                '</div></div><div class="span9" id="facetview_rightcol">',
+                '<input type="text" class="facetview_freetext span9" ',
+                'style="display:block; margin-left:auto; margin-right: auto; ',
+                'background:',
+                options.searchbox_shade,
+                '; name="q" value="" placeholder="search term" />'
+            ].join('');
+        } else {
+            thefacetview += [
+                '<div class="span12" id="facetview_rightcol">',
+                '<input type="text" class="facetview_freetext span11" ',
+                'style="display:block; margin-left:auto; margin-right: auto; ',
+                'background:',
+                options.searchbox_shade,
+                '; name="q" value="" placeholder="search term" />'
+                ].join('');
+        }
+
+        thefacetview += '<div class="facetview_top"> <div class="top-pagination span6">';
+        if (options.pager_on_top) {
+            thefacetview += '<div class="facetview_metadata"/>';
+        }
+        thefacetview += '</div><div class="span3 order-by">';
 
         if (options.search_sortby.length >= 0) {
             thefacetview = [
@@ -2455,28 +2488,9 @@ default one is "Not found..."
             }
             thefacetview += '</select>';
         }
-        thefacetview = [
-            thefacetview,
-            '<div style="clear:both;" class="btn-toolbar" ',
-            'id="facetview_selectedfilters"></div>',
-            '</div></div><div class="span12" style="margin-left:0px">'
-            ].join('');
 
-        if (options.facets.length > 0 || options.static_filters.length > 0) {
-            thefacetview = [
-                thefacetview,
-                '<div class="span3" style="margin-left:0px">',
-                '<div id="facetview_filters"><h2>Filter your results</h2>',
-                '</div><div class="current-filters">',
-                '<div class="filters-header"><strong>Current filters',
-                '</strong><small> <a href="#">Clear all</a></small> </div> ',
-                '<div class="facetview-filter-values" id="facetview_selected_filters"></div></div>',
-                '<div id="facetview_trees" style="padding-top:0px;">',
-                '</div></div><div class="span9" id="facetview_rightcol">'
-            ].join('');
-        } else {
-            thefacetview += '<div class="span12" id="facetview_rightcol">';
-        }
+        thefacetview += '</div></div>';
+
         if (options.searchbox_fieldselect.length > 0) {
             thefacetview = [
                 thefacetview,
@@ -2502,10 +2516,6 @@ default one is "Not found..."
             thefacetview += '</select>';
         }
 
-        options.pager_on_top ?
-            thefacetview += '<div class="facetview_metadata" ' +
-                'style="margin-top:20px;"></div>' :
-            '';
         thefacetview += options.searchwrap_start + options.searchwrap_end;
         thefacetview += '<div class="facetview_metadata">' +
             '</div></div></div></div></div>';
@@ -2524,17 +2534,40 @@ default one is "Not found..."
                 thefacetview = thefacetview.replace(
                     /{{HOW_MANY}}/gi,
                     options.paging.size);
-                thefacetview = thefacetview.replace(/{{REFRESH}}/gi, hash);
+
+                var href = 'http://' + window.location.origin + window.location.pathname;
+                thefacetview = thefacetview.replace(/{{REFRESH}}/gi, href);
                 obj.append(thefacetview);
                 !options.embedded_search ?
                     $('.facetview_search_options_container', obj).hide() : '';
 
                 // bind learn more and how many triggers
+
                 $('.facetview_learnmore', obj).bind('click', learnmore);
                 $('.facetview_howmany', obj).bind('click', howmany);
                 $('.facetview_searchfield', obj).bind('change', searchfield);
                 $('.facetview_orderby', obj).bind('change', orderby);
-                $('.facetview_sharesave', obj).bind('click', sharesave);
+                if ($('.facet-share')) {
+                    var html = [
+                        '<div ',
+                        'class="facetview_sharesavebox alert alert-info" ',
+                        'style="float:right; display:none; "> <button type="button" ',
+                        'class="facetview_sharesave close">×</button><p>Share or save',
+                        ' this search:</p> <textarea class="facetview_sharesaveurl" ',
+                        'style="width:100%;height:100px;">http://',
+                        window.location.host,
+                        window.location.pathname,
+                        '?source=',
+                        options.querystring,
+                        '</textarea></div>'
+                        ].join('');
+
+                    $('.facet-share').append(html);
+                    $('.facetview-share').bind('click', sharesave);
+                } else {
+                    $('.facetview_sharesave', obj).bind('click', sharesave);
+                }
+
 
                 // check paging info is available
                 !options.paging.size && options.paging.size != 0 ?
