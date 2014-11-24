@@ -2537,7 +2537,7 @@ default one is "Not found..."
                     /{{HOW_MANY}}/gi,
                     options.paging.size);
 
-                var href = 'http://' + window.location.origin + window.location.pathname;
+                var href = window.location.origin + window.location.pathname;
                 thefacetview = thefacetview.replace(/{{REFRESH}}/gi, href);
                 obj.append(thefacetview);
                 !options.embedded_search ?
