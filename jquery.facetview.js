@@ -1755,6 +1755,10 @@ default one is "Not found..."
 
         // fuzzify the freetext search query terms if required
         var fuzzify = function(querystr) {
+            if (querystr.slice(-1) === '\"' &&
+                querystr.charAt(querystr.length - 1) === '\"') {
+                return querystr;
+            }
             var rqs = querystr;
             if (options.default_freetext_fuzzify !== undefined) {
                 if (options.default_freetext_fuzzify === '*' ||
