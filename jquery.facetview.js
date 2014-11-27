@@ -1179,6 +1179,9 @@ default one is "Not found..."
 
                 //$('#facetview_selectedfilters', obj).append(pobj);
                 $('#facetview_selected_filters', obj).append(pobj);
+                if ($('.filters-header:hidden')) {
+                    $('.filters-header').show();
+                }
             }
 
             $('.facetview_filterselected', obj).unbind('click', clearfilter);
@@ -1234,6 +1237,11 @@ default one is "Not found..."
                     button.remove();
                 }
                 toDelete.remove();
+            }
+
+            //if it was the last filter, hide header
+            if ($('.facetview_selected').length === 0) {
+                $('.filters-header').hide();
             }
             options.paging.from = 0;
             dosearch();
@@ -2431,10 +2439,10 @@ default one is "Not found..."
                 '<div class="span3" style="margin-left:0px">',
                 '<div id="facetview_filters"><h2>Filter your results</h2>',
                 '</div><div class="current-filters">',
-                '<div class="filters-header"><strong>Current filters',
-                '</strong><small> <a class="clear-all" href="{{REFRESH}}">',
-                'Clear all</a></small> </div> <div ',
-                'class="facetview-filter-values" ',
+                '<div class="filters-header" style="display:none">',
+                '<strong>Current filters</strong><small> ',
+                '<a class="clear-all" href="{{REFRESH}}">Clear all</a></small>',
+                ' </div> <div class="facetview-filter-values" ',
                 'id="facetview_selected_filters"></div></div>',
                 '<div id="facetview_trees" style="padding-top:0px;">',
                 '</div></div><div class="span9" id="facetview_rightcol">',
