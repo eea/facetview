@@ -1243,6 +1243,21 @@ default one is "Not found..."
         // functions to do with building results
         // ===============================================
 
+        // returns an object for the facet, with values and their counts
+        var parsefacet = function(facet) {
+            var facetsobj = {};
+            for (var thing = 0; thing < facet.terms.length; thing++) {
+                facetsobj[facet.terms[thing].term] = facet.terms[thing].count;
+            }
+            if (options.add_undefined) {
+                var undefCount = facet.missing;
+                if (undefCount > 0) {
+                    facetsobj.undefined = undefCount;
+                }
+            }
+            return facetsobj;
+        };
+
         // read the result object and return useful vals
         // returns an object that contains things like ["data"] and ["facets"]
         var parseresults = function(dataobj) {
@@ -1268,19 +1283,7 @@ default one is "Not found..."
             resultobj.start = '';
             resultobj.found = dataobj.hits.total;
             for (var item in dataobj.facets) {
-                var facetsobj = {};
-                for (var thing = 0;
-                    thing < dataobj.facets[item]['terms'].length; thing++) {
-                    facetsobj[dataobj.facets[item]['terms'][thing]['term']] =
-                            dataobj.facets[item]['terms'][thing]['count'];
-                }
-                if (options.add_undefined) {
-                    var undefCount = dataobj.facets[item]['missing'];
-                    if (undefCount > 0) {
-                        facetsobj.undefined = undefCount;
-                    }
-                }
-                resultobj['facets'][item] = facetsobj;
+                resultobj.facets[item] = parsefacet(dataobj.facets[item]);
             }
             return resultobj;
         };
@@ -1414,6 +1417,166 @@ default one is "Not found..."
             alert(JSON.stringify(record, '', '    '));
         };
 
+        //converts results to json
+        var resultsToJson = function(results, property, rel) {
+            var jsonval = [];
+            if (rel === 'AND' || rel === 'OR') {
+                for (var element in results) {
+                    jsonval.push({'text' : element + ' (' + results[element] + ')',
+                                  'li_attr' : {
+                                        'rel' : property,
+                                        'class' : 'facetview_filterchoice leaf',
+                                        'title' : element
+                                    }
+                    });
+                }
+            } else {
+                for (var element in results) {
+                    jsonval.push({'text' : element,
+                                  'li_attr' : {
+                                        'rel' : property,
+                                        'class' : 'facetview_filterchoice leaf',
+                                        'title' : element
+                                  }
+                    });
+                }
+            }
+            return jsonval;
+        };
+
+        var updateJson = function(results, property, json, rel) {
+            for (var element in json) {
+                var value = json[element];
+                var text = value.li_attr.title;
+                var result_val = results[text];
+                if (result_val === undefined) {
+                    value.text = text + ' (0)';
+                } else {
+                    value.text = text + ' (' + result_val + ')';
+                }
+            }
+            return json;
+        };
+
+        var addValuesToTree = function(orRel, facetName, tree, records, order, doptions) {
+            if (options.hierarchy && options.hierarchy[facetName].length > 0) {
+                var openTree = $('.jstree-open');
+                tree.jstree('open_all');
+                tree.find('.jstree-leaf').show();
+
+                //first set all the values with count 0
+                var parents = tree.find('.jstree-node');
+                var par_len = parents.length;
+                for (var id = 0; id < par_len; id++) {
+                    var parent = parents[id];
+                    tree.jstree(true).rename_node(
+                        $(parent), parent.title + ' (0)');
+                }
+                //set the values for the leaves
+                for (var item in records) {
+                    var record = records[item];
+                    var inTree = tree.find('.jstree-leaf[title="' + item + '"]');
+
+                    if (inTree.length > 0) {
+                        tree.jstree(true).rename_node(
+                            inTree, item + ' (' + record + ')');
+                    }
+                }
+
+                //set the values for the parents
+                var values = $('.facetview_filterchoice[rel="' +
+                                facetName + '"]:not(.jstree-leaf)');
+
+                for (var id = 0; id < values.length; id++) {
+                    var value = $(values[id]);
+                    var result = 0;
+                    var leafChildren = value.find('.jstree-leaf');
+                    var leaflen = leafChildren.length;
+                    for (var idx = 0; idx < leaflen; idx++) {
+                            var val = leafChildren[idx].textContent;
+                            var start = val.indexOf('(');
+                            var stop = val.indexOf(')');
+                            val = parseInt(
+                                val.substring(start + 1, stop)) || 0;
+                            result += val;
+                    }
+                    if (result >= 0)
+                        tree.jstree(true).rename_node(
+                            value,
+                            value.attr('title') + ' (' + result + ')');
+                }
+
+                //hide the ones with no values
+                values = $('.jstree-node[rel="' + facetName + '"]');
+                for (id = 0; id < values.length; id++) {
+                    var value = values[id];
+                    var text = $(value).children('a.jstree-anchor')
+                                       .text();
+                    if (text.indexOf('(0)') != -1) {
+                        $(value).hide();
+                    }
+                }
+
+                //Reopen closed parents
+                tree.jstree('close_all');
+                for (var o_id = 0; o_id < openTree.length; o_id++) {
+                    tree.jstree('open_node', $(openTree[o_id]));
+                }
+            } else {
+                var oldJson = tree.jstree(true).get_json('#');
+                tree.jstree('destroy');
+                if (oldJson.length === 0) {
+                    createtreefromdata(
+                        tree,
+                        order,
+                        doptions,
+                        resultsToJson(records, facetName, orRel));
+                } else {
+                    createtreefromdata(
+                        tree,
+                        order,
+                        doptions,
+                        updateJson(records, facetName, oldJson, orRel)
+                    );
+
+                    var children = tree.find('.jstree-leaf');
+                    children.show();
+                    if (orRel === 'AND') {
+                        for (var id = 0; id < children.length; id++) {
+                            var child = children[id];
+                            if (child.textContent.indexOf('(0)') > -1) {
+                                $(child).hide();
+                            }
+                        }
+                    }
+                }
+
+            }
+
+        };
+
+        //put facet values for an 'OR' facet
+        var setFacetValues = function(sdata) {
+            var facet = Object.keys(sdata.facets)[0];
+            console.log('Set for ', facet);
+            var tree = $('.facetview_tree[rel="' + facet + '"]');
+            //todo, see if can be better, check parseresults
+            var records = parsefacet(sdata.facets[facet]);
+            var order = 'term';
+            var doptions = [];
+            //Get facet order and options
+            var facets = options.facets;
+            for (var fct in facets) {
+                var curr_fct = facets[fct];
+                if(curr_fct.field === facet) {
+                    order = curr_fct.order;
+                    doptions = curr_fct.facet_display_options;
+                    break;
+                }
+            }
+            addValuesToTree('OR', facet, tree, records, order, doptions);
+        };
+
         // put the results on the page
         var showresults = function(sdata) {
             //set the heights for each tree
@@ -1451,147 +1614,77 @@ default one is "Not found..."
                             .find('.facetview_or');
                 var or_buttton_rel = or_button.attr('rel');
 
-                if (options.hierarchy && options.hierarchy[facet].length > 0) {
-                    tree.jstree('open_all');
-                    tree.find('.jstree-leaf').show();
+                if (or_buttton_rel === 'OR') {
+                    //query ES to get results without current facet options
+                    var esquery = JSON.parse(elasticsearchquery());
+                    var filters = esquery.query.filtered;
 
-                    //first set all values with count 0 or none
-                    var parents = $('.jstree-node');
-                    var par_len = parents.length;
-                    for (var id = 0; id < par_len; id++) {
-                        var parent = parents[id];
-                        //if (or_buttton_rel === 'AND') {
-                        tree.jstree(true).rename_node(
-                                $(parent), parent.title + ' (0)');
-                        //} else {
-                        //    tree.jstree(true)
-                        //        .rename_node($(parent), parent.title);
-                        //}
-                    }
+                    if (!filters) {
+                        addValuesToTree('OR', facet, tree, records, current_filter.order, current_filter.facet_display_options);
+                    } else {
+                        var newQuery = {'query': filters.query};
+                        filters = filters.filter;
+                        if ('and' in filters) {
+                            var and = filters.and;
+                            var newand = [];
+                            for (var aval in and) {
+                                var filter = and[aval].bool.should;
+                                var newfilter = [];
+                                for (var flt in filter) {
+                                    var currflt = filter[flt];
+                                    if (facet in currflt.term) {
+                                        continue;
+                                    }
+                                    newfilter.push(currflt);
+                                }
+                                if (newfilter.length > 0) {
+                                    newand.push({'bool': {'should': newfilter}});
+                                }
+                            }
+                            if (newand.length > 1) {
+                                filters.and = newand;
+                            } else {
+                                filters = newand;
+                            }
 
-
-                    //set the values for the leaves
-                    for (var item in records) {
-                        var record = records[item];
-                        var inTree = $('.jstree-leaf[title="' + item + '"]');
-
-                        if (inTree.length > 0) {
-                            tree.jstree(true).rename_node(
-                                inTree, item + ' (' + record + ')');
-                        }
-                    }
-                    //set the values for the parents
-                    var values = $('.facetview_filterchoice[rel="' +
-                                    facet + '"]:not(.jstree-leaf)');
-
-                    for (var id = 0; id < values.length; id++) {
-                        var value = $(values[id]);
-                        var result = 0;
-                        var leafChildren = value.find('.jstree-leaf');
-                        var leaflen = leafChildren.length;
-                        for (var idx = 0; idx < leaflen; idx++) {
-                                var val = leafChildren[idx].textContent;
-                                var start = val.indexOf('(');
-                                var stop = val.indexOf(')');
-                                val = parseInt(
-                                    val.substring(start + 1, stop)) || 0;
-                                result += val;
-                        }
-                        if (result >= 0)
-                            tree.jstree(true).rename_node(
-                                value,
-                                value.attr('title') + ' (' + result + ')');
-                    }
-                    //hide the ones with no values
-                    values = $('.jstree-node[rel="' + facet + '"]');
-                    if (or_buttton_rel === 'AND') {
-                        for (id = 0; id < values.length; id++) {
-                            var value = values[id];
-                            var text = $(value).children('a.jstree-anchor')
-                                                .text();
-                            if (text.indexOf('(0)') != -1) {
-                                $(value).hide();
+                        } else {
+                            var filter = filters.bool.should;
+                            var newfilter = [];
+                            for (var flt in filter) {
+                                var currflt = filter[flt];
+                                if (facet in currflt.term) {
+                                    continue;
+                                }
+                                newfilter.push(currflt);
+                            }
+                            if (newfilter.length === 0) {
+                                filters = [];
+                            } else {
+                                filters.bool.should = newfilter;
                             }
                         }
-                    }
 
-                    tree.jstree('close_all');
-                    for (var o_id = 0; o_id < open.length; o_id++) {
-                        tree.jstree('open_node', $(open[o_id]));
+                    if (filters.length > 0) {
+                        newQuery = {'query': {'filtered': {'query': newQuery.query, 'filter': filters}}};
+                    }
+                    newQuery.facets = {};
+                    newQuery.facets[facet] = esquery.facets[facet];
+                    newQuery = JSON.stringify(newQuery);
+
+                    //Ajax call
+                    $.ajax({
+                        type: 'get',
+                        url: options.search_url,
+                        data: {source: newQuery},
+                        dataType: options.datatype,
+                        success: setFacetValues
+                    });
                     }
 
                 } else {
-                    //function that converts the results to a json for
-                    //the jstree
-                    var resultsToJson = function(results, property, rel) {
-                        var jsonval = [];
-                        if (rel === 'AND' || rel === 'OR') {
-                            for (var element in results) {
-                                jsonval.push({
-                                    'text' : element + ' (' +
-                                            results[element] + ')',
-                                    'li_attr' : {
-                                        'rel' : property,
-                                        'class' : 'facetview_filterchoice leaf',
-                                        'title' : element
-                                    }
-                                });
-                            }
-                        } else {
-                            for (var element in results) {
-                                jsonval.push({
-                                    'text' : element,
-                                    'li_attr' : {
-                                        'rel' : property,
-                                        'class' : 'facetview_filterchoice leaf',
-                                        'title' : element
-                                    }
-                                });
-                            }
-                        }
-                        return jsonval;
-                    };
-                    var updateJson = function(results, property, json, rel) {
-                        for (var element in json) {
-                            var value = json[element];
-                            var text = value.li_attr.title;
-                            var result_val = results[text];
-                            if (result_val === undefined) {
-                                value.text = text + ' (0)';
-                            } else {
-                                value.text = text + ' (' + result_val + ')';
-                            }
-                        }
-                        return json;
-                    };
-
-                    var oldJson = tree.jstree(true).get_json('#');
-                    tree.jstree('destroy');
-                    if (oldJson.length === 0) {
-                        createtreefromdata(
-                            tree,
-                            current_filter.order,
-                            current_filter.facet_display_options,
-                            resultsToJson(records, facet, or_buttton_rel));
-                    } else {
-                        createtreefromdata(
-                            tree,
-                            current_filter.order,
-                            current_filter.facet_display_options,
-                            updateJson(records, facet,
-                                        oldJson, or_buttton_rel));
-
-                        var children = tree.find('.jstree-leaf');
-                        children.show();
-                        if (or_buttton_rel === 'AND') {
-                            for (var id = 0; id < children.length; id++) {
-                                var child = children[id];
-                                if (child.textContent.indexOf('(0)') > -1) {
-                                    $(child).hide();
-                                }
-                            }
-                        }
-                    }
+                    addValuesToTree('AND', facet, tree, records,
+                                    current_filter.order,
+                                    current_filter.facet_display_options);
                 }
 
                 //hide hierarchic parents with no results
