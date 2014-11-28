@@ -830,21 +830,13 @@ default one is "Not found..."
                 parent_tree.height(10 * lineHeight + 'px');
             })
             .on('open_node.jstree', function(event, data) {
-                var or_button = tree
-                        .siblings('.facetview_filter_options')
-                            .find('.facetview_or');
-                var or_buttton_rel = or_button.attr('rel');
                 var children = data.node.children;
                 var len = children.length;
                 for (var idx = 0; idx < len; idx++) {
                     var child = $('#' + children[idx]);
-                    if (or_buttton_rel === 'OR') {
-                        child.show();
-                    } else {
-                        if (child.children('a.jstree-anchor')
-                                    .text().indexOf('(0)') != -1) {
-                            child.hide();
-                        }
+                    if (child.children('a.jstree-anchor')
+                             .text().indexOf('(0)') != -1) {
+                        child.hide();
                     }
                 }
             });
@@ -1549,12 +1541,10 @@ default one is "Not found..."
 
                     var children = tree.find('.jstree-leaf');
                     children.show();
-                    if (orRel === 'AND') {
-                        for (var id = 0; id < children.length; id++) {
-                            var child = children[id];
-                            if (child.textContent.indexOf('(0)') > -1) {
-                                $(child).hide();
-                            }
+                    for (var id = 0; id < children.length; id++) {
+                        var child = children[id];
+                        if (child.textContent.indexOf('(0)') > -1) {
+                            $(child).hide();
                         }
                     }
                 }
@@ -1631,6 +1621,7 @@ default one is "Not found..."
                     } else {
                         var newQuery = {'query': filters.query};
                         filters = filters.filter;
+
                         if ('and' in filters) {
                             var and = filters.and;
                             var newand = [];
@@ -1653,7 +1644,6 @@ default one is "Not found..."
                             } else {
                                 filters = newand[0];
                             }
-
                         } else {
                             var filter = filters.bool.should;
                             var newfilter = [];
@@ -1670,7 +1660,7 @@ default one is "Not found..."
                                 filters.bool.should = newfilter;
                             }
                         }
-                        if ('bool' in filters) {
+                        if ('bool' in filters || 'and' in filters) {
                             newQuery = {'query': {'filtered': {'query': newQuery.query, 'filter': filters}}};
                         }
                         newQuery.facets = {};
@@ -1699,21 +1689,13 @@ default one is "Not found..."
                         var parent = $(parents[idx]);
                         var text = parent.text();
                         var rel = parent.attr('rel');
-                        var tree = $('.facetview_tree[rel="' + rel + '"]');
-                        var or_button = tree
-                                        .siblings('.facetview_filter_options')
-                                            .find('.facetview_or');
-                        var or_buttton_rel = or_button.attr('rel');
-                        if (or_buttton_rel === 'AND') {
-                            var start = text.indexOf('(');
-                            var stop = text.indexOf(')');
-                            text = parseInt(
-                                    text.substring(start + 1, stop)) || 0;
-                            if (text === 0) {
-                                $(parents[idx]).parent().hide();
-                            } else {
-                                $(parents[idx]).parent().show();
-                            }
+                        var start = text.indexOf('(');
+                        var stop = text.indexOf(')');
+                        text = parseInt(text.substring(start + 1, stop)) || 0;
+                        if (text === 0) {
+                            $(parents[idx]).parent().hide();
+                        } else {
+                            $(parents[idx]).parent().show();
                         }
                     }
                 }
