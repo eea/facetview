@@ -1558,7 +1558,6 @@ default one is "Not found..."
         //put facet values for an 'OR' facet
         var setFacetValues = function(sdata) {
             var facet = Object.keys(sdata.facets)[0];
-            console.log('Set for ', facet);
             var tree = $('.facetview_tree[rel="' + facet + '"]');
             //todo, see if can be better, check parseresults
             var records = parsefacet(sdata.facets[facet]);
@@ -1644,7 +1643,7 @@ default one is "Not found..."
                             if (newand.length > 1) {
                                 filters.and = newand;
                             } else {
-                                filters = newand;
+                                filters = newand[0];
                             }
 
                         } else {
@@ -1658,27 +1657,25 @@ default one is "Not found..."
                                 newfilter.push(currflt);
                             }
                             if (newfilter.length === 0) {
-                                filters = [];
+                                filters = {};
                             } else {
                                 filters.bool.should = newfilter;
                             }
                         }
-
-                    if (filters.length > 0) {
-                        newQuery = {'query': {'filtered': {'query': newQuery.query, 'filter': filters}}};
-                    }
-                    newQuery.facets = {};
-                    newQuery.facets[facet] = esquery.facets[facet];
-                    newQuery = JSON.stringify(newQuery);
-
-                    //Ajax call
-                    $.ajax({
-                        type: 'get',
-                        url: options.search_url,
-                        data: {source: newQuery},
-                        dataType: options.datatype,
-                        success: setFacetValues
-                    });
+                        if ('bool' in filters) {
+                            newQuery = {'query': {'filtered': {'query': newQuery.query, 'filter': filters}}};
+                        }
+                        newQuery.facets = {};
+                        newQuery.facets[facet] = esquery.facets[facet];
+                        newQuery = JSON.stringify(newQuery);
+                        //Ajax call
+                        $.ajax({
+                            type: 'get',
+                            url: options.search_url,
+                            data: {source: newQuery},
+                            dataType: options.datatype,
+                            success: setFacetValues
+                        });
                     }
 
                 } else {
