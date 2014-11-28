@@ -1840,7 +1840,7 @@ default one is "Not found..."
                 return querystr;
             }
             var rqs = querystr;
-            if (options.default_freetext_fuzzify !== undefined) {
+            if (options.default_freetext_fuzzify) {
                 if (options.default_freetext_fuzzify === '*' ||
                     options.default_freetext_fuzzify.indexOf('~') > -1) {
                     if (querystr.indexOf('*') === -1 &&
