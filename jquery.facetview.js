@@ -2091,7 +2091,7 @@ default one is "Not found..."
             // make the search query
             var qrystr = elasticsearchquery();
             // augment the URL bar if possible
-            if (options.pushstate) {
+            if (window.history.pushState && options.pushstate) {
                 var currurl = '?source=' + options.querystring;
                 window.history.pushState('', 'search', currurl);
             }
