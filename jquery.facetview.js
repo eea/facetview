@@ -412,6 +412,11 @@ Possible values:
     sort - when included, one can sort the facet values
 The checkbox option is only possible for one layer trees
 
+enable_wildcard_search
+----------------------
+When this parameter is set to true, wildcards in the query string will be
+parsed.
+
 no_results_message
 ------------------
 Custom message to display when there are no results found for the search. The
@@ -532,7 +537,8 @@ default one is "Not found..."
             'permanent_filters': false,
             'query_filter': false,
             'facet_display_options' : [],
-            'no_results_message' : false
+            'no_results_message' : false,
+            'enable_wildcard_search' : true
         };
 
 
@@ -1865,6 +1871,21 @@ default one is "Not found..."
             return rqs;
         };
 
+        var buildqueryval = function() {
+            var qryval = {'query': fuzzify(options.q)};
+            $('.facetview_searchfield', obj).val() != '' ?
+                qryval.default_field = $('.facetview_searchfield', obj).val() :
+                '';
+
+            options.default_operator !== undefined ?
+                qryval.default_operator = options.default_operator : false;
+
+            if (options.enable_wildcard_search)
+                qryval.analyze_wildcard = true;
+
+            return qryval;
+        }
+
         // build the search query URL based on current params
         var elasticsearchquery = function() {
             var qs = {};
@@ -1995,14 +2016,7 @@ default one is "Not found..."
             }
             if (bool) {
                 if (options.q != '') {
-                    var qryval = {'query': fuzzify(options.q)};
-                    $('.facetview_searchfield', obj).val() != '' ?
-                        qryval.default_field = $('.facetview_searchfield', obj)
-                            .val() :
-                        '';
-                    options.default_operator !== undefined ?
-                        qryval.default_operator = options.default_operator :
-                        false;
+                    var qryval = buildqueryval();
                     bool['must'].push({'query_string': qryval });
                 }
                 nested ? bool['must'].push(nested) : '';
@@ -2011,14 +2025,7 @@ default one is "Not found..."
                     qs['query'] = {'match_all' : {}};
             } else {
                 if (options.q != '') {
-                    var qryval = {'query': fuzzify(options.q)};
-                    $('.facetview_searchfield', obj).val() != '' ?
-                        qryval.default_field = $('.facetview_searchfield', obj)
-                            .val() :
-                        '';
-                    options.default_operator !== undefined ?
-                        qryval.default_operator = options.default_operator :
-                        false;
+                    var qryval = buildqueryval();
                     qs['query'] = {'query_string': qryval};
                 } else {
                     qs['query'] = {'match_all': {}};
