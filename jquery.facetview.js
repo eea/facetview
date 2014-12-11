@@ -417,6 +417,11 @@ enable_wildcard_search
 When this parameter is set to true, wildcards in the query string will be
 parsed.
 
+querystr_filtered_chars
+-----------------------
+Add a string with the chars that should be filtered out when performing the
+search. Use this when you want to escape wildcards added by the user.
+
 no_results_message
 ------------------
 Custom message to display when there are no results found for the search. The
@@ -537,8 +542,9 @@ default one is "Not found..."
             'permanent_filters': false,
             'query_filter': false,
             'facet_display_options' : [],
-            'no_results_message' : false,
-            'enable_wildcard_search' : true
+            'enable_wildcard_search' : true,
+            'querystr_filtered_chars' : '',
+            'no_results_message' : false
         };
 
 
@@ -1839,6 +1845,16 @@ default one is "Not found..."
         // functions to do with searching
         // ===============================================
 
+        // filter out unwanted chars
+        var filterQueryStrChars = function(querystr) {
+            var res = querystr;
+            options.querystr_filtered_chars.split('').forEach(
+                    function(c) {
+                        res = res.replace(new RegExp(c, 'g'), '');
+                    });
+            return res;
+        }
+
         // fuzzify the freetext search query terms if required
         var fuzzify = function(querystr) {
             if (querystr.slice(-1) === '\"' &&
@@ -1872,7 +1888,8 @@ default one is "Not found..."
         };
 
         var buildqueryval = function() {
-            var qryval = {'query': fuzzify(options.q)};
+            var qrystr = filterQueryStrChars(options.q);
+            var qryval = {'query': fuzzify(qrystr)};
             $('.facetview_searchfield', obj).val() != '' ?
                 qryval.default_field = $('.facetview_searchfield', obj).val() :
                 '';
