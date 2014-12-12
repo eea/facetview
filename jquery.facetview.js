@@ -1077,7 +1077,7 @@ default one is "Not found..."
                             myOrder.text,
                             '<i class="icon-arrow-',
                             myOrder.direction,
-                            '"></i> </a> </div> <div class="facet_cond"><span>Condition</span> ',
+                            '"></i> </a> </div> <div class="facet_cond"><span> Condition </span> ',
                             '<a class="btn btn-small facetview_or"',
                             ' title="select another option from this filter" ',
                             'rel="',
@@ -1563,6 +1563,13 @@ default one is "Not found..."
 
             }
 
+            // Expand tree to desired height
+            var prefHeight = 10 * tree.find('.jstree-leaf').height();
+            var leaves = tree.find('.jstree-leaf:visible')
+            var ulHeight = leaves.height() * leaves.length;
+            var treeHeight = Math.min(ulHeight, prefHeight);
+            tree.height(treeHeight + 'px');
+            console.log('tree');
         };
 
         //put facet values for an 'OR' facet
@@ -1588,13 +1595,6 @@ default one is "Not found..."
 
         // put the results on the page
         var showresults = function(sdata) {
-            //set the heights for each tree
-            var heights = [];
-            var trees = $('.jstree');
-            for (var treeID = 0; treeID < trees.length; treeID++) {
-                heights.push($(trees[treeID]).height());
-            }
-
             options.rawdata = sdata;
             // get the data and parse from the es layout
             var data = parseresults(sdata);
@@ -1809,23 +1809,7 @@ default one is "Not found..."
             var trees = $('div.facetview_tree');
             var treeNum = trees.length;
 
-            //heights = JSON.parse(getCookie('heights'));
-            for (var treeID = 0; treeID < treeNum; treeID++) {
-                var current_tree = $(trees[treeID]);
-                if (current_tree.is(':visible')) {
-                    var prefHeight = heights[treeID];
-                    if (prefHeight === 0) {
-                        prefHeight = 10 *
-                                     current_tree.find('.jstree-leaf').height();
-                    }
-                    var ulHeight = current_tree
-                                    .children('.jstree-container-ul')
-                                    .height();
-                    var treeHeight = Math.min (ulHeight, prefHeight);
-                    current_tree.height(treeHeight + 'px');
-                }
-            }
-        };
+       };
 
         //get a cookie by name
         function getCookie (cookieName) {
