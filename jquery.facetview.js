@@ -1569,7 +1569,6 @@ default one is "Not found..."
             var ulHeight = leaves.height() * leaves.length;
             var treeHeight = Math.min(ulHeight, prefHeight);
             tree.height(treeHeight + 'px');
-            console.log('tree');
         };
 
         //put facet values for an 'OR' facet
