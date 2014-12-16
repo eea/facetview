@@ -1833,7 +1833,7 @@ default one is "Not found..."
             var res = querystr;
             options.querystr_filtered_chars.split('').forEach(
                     function(c) {
-                        res = res.replace(new RegExp(c, 'g'), '');
+                        while (res.indexOf(c) > 0) res = res.replace(c, '');
                     });
             return res;
         }
