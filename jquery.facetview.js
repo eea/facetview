@@ -1656,11 +1656,12 @@ default one is "Not found..."
                                 filters = newand[0];
                             }
                         } else {
-                            var filter = filters.bool.should;
+                            filters.bool = filters.bool || {};
+                            var filter = filters.bool.should || [];
                             var newfilter = [];
                             for (var flt in filter) {
                                 var currflt = filter[flt];
-                                if (facet in currflt.term) {
+                                if (currflt.term && facet in currflt.term) {
                                     continue;
                                 }
                                 newfilter.push(currflt);
@@ -2558,23 +2559,28 @@ default one is "Not found..."
                 '<option value="">Relevance</option> '
             ].join('');
             for (var each = 0; each < options.search_sortby.length; each++) {
-                var selected = '';
+                var selectThis = false;
                 var obj = options.search_sortby[each];
+                var order = undefined;
                 if (!options.selected_sort &&
-                    options.sort[0][obj['field']] != undefined) {
-                    selected = 'selected=""';
+                    options.sort[0][obj['field']] != undefined &&
+                    options.sort[0][obj['field']]['order'] != undefined) {
+                        selectThis = true;
+                        order = options.sort[0][obj['field']]['order'];
                 }
                 var sorttype = obj['display'];
                 thefacetview += [
                     '<option value="',
                     obj['field'],
                     '" href="asc" ',
-                    selected,
+                    selectThis && order == 'asc' ? 'selected=""' : '',
                     '> ',
                     sorttype,
                     ' ascending </option> <option value="',
                     obj['field'],
-                    '" href="desc"> ',
+                    '" href="desc" ',
+                    selectThis && order == 'desc' ? 'selected=""' : '',
+                    '> ',
                     sorttype,
                     ' descending </option>'
                 ].join('');
