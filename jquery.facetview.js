@@ -2568,21 +2568,24 @@ default one is "Not found..."
                         selectThis = true;
                         order = options.sort[0][obj['field']]['order'];
                 }
-                var sorttype = obj['display'];
+                var sortAsc = obj['display_asc'] ||
+                              (obj['display'] + ' ascending');
+                var sortDesc = obj['display_desc'] ||
+                               (obj['display'] + ' descending');
                 thefacetview += [
                     '<option value="',
                     obj['field'],
                     '" href="asc" ',
                     selectThis && order == 'asc' ? 'selected=""' : '',
                     '> ',
-                    sorttype,
-                    ' ascending </option> <option value="',
+                    sortAsc,
+                    ' </option> <option value="',
                     obj['field'],
                     '" href="desc" ',
                     selectThis && order == 'desc' ? 'selected=""' : '',
                     '> ',
-                    sorttype,
-                    ' descending </option>'
+                    sortDesc,
+                    ' </option>'
                 ].join('');
             }
             thefacetview += '</select>';
