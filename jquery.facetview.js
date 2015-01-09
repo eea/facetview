@@ -1472,18 +1472,6 @@ default one is "Not found..."
 
         var addValuesToTree = function(orRel, facetName, tree, records, order, doptions) {
             if (options.hierarchy && options.hierarchy[facetName].length > 0) {
-                var openTree = $('.jstree-open');
-                tree.jstree('open_all');
-                tree.find('.jstree-leaf').show();
-
-                //first set all the values with count 0
-                var parents = tree.find('.jstree-node');
-                var par_len = parents.length;
-                for (var id = 0; id < par_len; id++) {
-                    var parent = parents[id];
-                    tree.jstree(true).rename_node(
-                        $(parent), parent.title + ' (0)');
-                }
                 //set the values for the leaves
                 for (var item in records) {
                     var record = records[item];
@@ -1495,29 +1483,6 @@ default one is "Not found..."
                     }
                 }
 
-                //set the values for the parents
-                var values = $('.facetview_filterchoice[rel="' +
-                                facetName + '"]:not(.jstree-leaf)');
-
-                for (var id = 0; id < values.length; id++) {
-                    var value = $(values[id]);
-                    var result = 0;
-                    var leafChildren = value.find('.jstree-leaf');
-                    var leaflen = leafChildren.length;
-                    for (var idx = 0; idx < leaflen; idx++) {
-                            var val = leafChildren[idx].textContent;
-                            var start = val.indexOf('(');
-                            var stop = val.indexOf(')');
-                            val = parseInt(
-                                val.substring(start + 1, stop)) || 0;
-                            result += val;
-                    }
-                    if (result >= 0)
-                        tree.jstree(true).rename_node(
-                            value,
-                            value.attr('title') + ' (' + result + ')');
-                }
-
                 //hide the ones with no values
                 values = $('.jstree-node[rel="' + facetName + '"]');
                 for (id = 0; id < values.length; id++) {
@@ -1527,12 +1492,6 @@ default one is "Not found..."
                     if (text.indexOf('(0)') != -1) {
                         $(value).hide();
                     }
-                }
-
-                //Reopen closed parents
-                tree.jstree('close_all');
-                for (var o_id = 0; o_id < openTree.length; o_id++) {
-                    tree.jstree('open_node', $(openTree[o_id]));
                 }
             } else {
                 var oldJson = tree.jstree(true).get_json('#');
