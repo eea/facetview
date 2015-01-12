@@ -1493,9 +1493,7 @@ default one is "Not found..."
                 values = $('.jstree-node[rel="' + facetName + '"]');
                 for (id = 0; id < values.length; id++) {
                     var value = values[id];
-                    var text = $(value).children('a.jstree-anchor')
-                                       .text();
-                    if (text.indexOf('(0)') != -1) {
+                    if (records[value.title] === undefined) {
                         $(value).hide();
                     }
                 }
