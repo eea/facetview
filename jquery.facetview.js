@@ -2557,6 +2557,7 @@ default one is "Not found..."
         }
 
         thefacetview += '</div></div>';
+        thefacetview += '<div class="notify_loading"></div>';
 
         if (options.searchbox_fieldselect.length > 0) {
             thefacetview = [
