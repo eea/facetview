@@ -350,6 +350,11 @@ post_search_callback
 This can define or reference a function that will be executed any time new
 search results are retrieved and presented on the page.
 
+post_init_callback
+------------------
+This can define or reference a function that will be executed any time new
+facetview object is being created
+
 pushstate
 ---------
 Updates the URL string with the current query when the user changes the search
@@ -533,6 +538,7 @@ default one is "Not found..."
             'result_box_colours': [],
             'fadein': 800,
             'post_search_callback': false,
+            'post_init_callback': false,
             'pushstate': true,
             'linkify': true,
             'default_operator': 'OR',
@@ -2704,6 +2710,10 @@ default one is "Not found..."
                 });
             } else {
                 whenready();
+            }
+
+            if (options.post_init_callback) {
+                options.post_init_callback();
             }
 
         }); // end of the function
